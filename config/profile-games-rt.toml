@@ -1,0 +1,40 @@
+# optional
+[seccomp]
+type = "file"
+include = "./config/seccomp-generic.toml"
+
+# optional
+[dbus]
+type = "inline"
+# optional, default = xdg-dbus-proxy
+bin = "xdg-dbus-proxy"
+# optional, default = "$DBUS_SESSION_BUS_ADDRESS"
+bus_address = "$DBUS_SESSION_BUS_ADDRESS"
+# optional
+talk = [
+    "org.freedesktop.DBus",
+    "org.freedesktop.portal.Desktop",
+    "org.freedesktop.portal.Settings",
+    "org.freedesktop.portal.FileChooser",
+    "org.freedesktop.Notifications",
+    "org.kde.StatusNotifierWatcher",
+    "org.gtk.gio.StyleMonitor",
+]
+# optional
+own = []
+
+# required
+[template]
+#optiona, default = "bwrap"
+bin = "bwrap"
+include = "./config/templates"
+name = "bw-games-rt"
+
+[template.context]
+GAMES_RT = { type = "env", src = "$HOME/games-rt" }
+
+SRC_HOME = { type = "env", src = "$HOME" }
+DST_HOME = { type = "env", src = "/home/$USER" }
+
+SRC_XDG_RUNTIME_DIR = { type = "env", src = "$XDG_RUNTIME_DIR" }
+DST_XDG_RUNTIME_DIR = { type = "env", src = "$XDG_RUNTIME_DIR" }

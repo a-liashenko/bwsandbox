@@ -1,0 +1,21 @@
+[package]
+name = "bwrap-helper"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = { version = "1.0.100", default-features = false, features = ["std"] }
+fastrand = { version = "2.3.0", default-features = false, features = ["std"] }
+handlebars = { version = "6.3.2", default-features = false, features = ["dir_source"] }
+serde = { version = "1.0.226", default-features = false, features = ["std", "derive"] }
+shellexpand = { version = "3.1.1", default-features = false, features = ["base-0"] }
+shlex = { version = "1.3.0", default-features = false, features = ["std"] }
+thiserror = { version = "2.0.16", default-features = false, features = ["std"] }
+toml = { version = "0.9.7", default-features = false, features = ["std", "serde", "parse"] }
+nix = { version = "0.30.1", default-features = false, features = ["fs"] }
+
+[profile.release]
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = true

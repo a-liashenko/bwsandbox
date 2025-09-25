@@ -1,0 +1,29 @@
+{{!-- Bind user GAMES_RT to sandboxed user --}}
+--bind  {{GAMES_RT}} {{DST_HOME}}
+--chdir {{DST_HOME}}
+
+{{!-- # Shared utils dir --}}
+--ro-bind  /opt /opt
+
+{{!-- # Shared games dirs --}}
+--bind-try /mnt/shared/games       /mnt/shared/games
+--bind-try /mnt/generic-data/games /mnt/generic-data/games
+
+{{!-- # Extra env vars for proton and AMD --}}
+--setenv PROTON_NO_WM_DECORATION 1
+--setenv PROTON_USE_NTSYNC 1
+--setenv PROTON_FSR4_UPGRADE 1
+--setenv PROTON_ENABLE_WAYLAND 1
+
+--setenv RADV_PERFTEST nggc,gpl,sam,rt
+--setenv RADV_ANTI_LAG 1
+
+--setenv SDL_VIDEODRIVER wayland
+--setenv GDK_BACKEND wayland
+--setenv QT_QPA_PLATFORM wayland
+
+--setenv MALLOC_ARENA_MAX 2
+--setenv WINE_LARGE_ADDRESS_AWARE 1
+
+{{> bw-base }}
+{{> bw-base-user }}
