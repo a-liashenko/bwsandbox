@@ -19,7 +19,7 @@ fn bwrap_bin() -> String {
 #[serde(rename_all = "snake_case")]
 #[serde(tag = "type")]
 pub enum ContextValue {
-    Env { src: EnvValue },
+    Env { src: EnvValue<String> },
 }
 impl Serialize for ContextValue {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>

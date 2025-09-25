@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use super::{
     dbus::DbusConfig, env_value::EnvValue, seccomp::SeccompConfig, template::TemplateConfig,
 };
@@ -15,7 +17,7 @@ pub struct ProfileConfig {
 #[serde(tag = "type")]
 pub enum Entry<T> {
     Inline(T),
-    File { include: EnvValue },
+    File { include: EnvValue<PathBuf> },
 }
 
 #[test]

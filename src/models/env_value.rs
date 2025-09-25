@@ -2,40 +2,73 @@ use serde::{Deserialize, de::Error};
 
 #[derive(Debug)]
 #[repr(transparent)]
-pub struct EnvValue(String);
+pub struct EnvValue<T>(T);
 
-impl EnvValue {
-    pub fn resolve(env: String) -> anyhow::Result<Self> {
+impl<T> EnvValue<T>
+where
+    T: TryFrom<String>,
+    T::Error: std::error::Error,
+{
+    pub fn resolve(env: &str) -> anyhow::Result<Self> {
         let v = match shellexpand::env(&env)? {
-            std::borrow::Cow::Borrowed(_) => Self(env),
-            std::borrow::Cow::Owned(v) => Self(v),
-        };
-        Ok(v)
-    }
-
-    pub fn into_string(self) -> String {
-        self.0
+            std::borrow::Cow::Borrowed(_) => T::try_from(env.to_string()),
+            std::borrow::Cow::Owned(v) => T::try_from(v),
+        }
+        .map_err(|e| anyhow::anyhow!("Failed to resolve Env string into type {e}"))?;
+        Ok(Self(v))
     }
 }
 
-impl AsRef<str> for EnvValue {
-    fn as_ref(&self) -> &str {
+impl<T> EnvValue<T> {
+    pub fn into_inner(self) -> T {
+        self.0
+    }
+
+    pub fn as_inner(&self) -> &T {
         &self.0
     }
 }
 
-impl Default for EnvValue {
+impl<T: AsRef<str>> AsRef<str> for EnvValue<T> {
+    fn as_ref(&self) -> &str {
+        self.0.as_ref()
+    }
+}
+
+impl<T: Default> Default for EnvValue<T> {
     fn default() -> Self {
         Self(Default::default())
     }
 }
 
-impl<'de> Deserialize<'de> for EnvValue {
+impl<'de, T> Deserialize<'de> for EnvValue<T>
+where
+    T: TryFrom<String>,
+    T::Error: std::error::Error,
+{
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
     {
         let src = String::deserialize(deserializer)?;
-        EnvValue::resolve(src).map_err(D::Error::custom)
+        EnvValue::resolve(&src).map_err(D::Error::custom)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::EnvValue;
+    use std::path::PathBuf;
+
+    #[test]
+    fn test_types_string() {
+        let home = std::env::var("HOME").unwrap();
+        let test_file = format!("{home}/file.txt");
+
+        let _val: PathBuf = EnvValue::resolve("$HOME/file.txt").unwrap().into_inner();
+        assert_eq!(_val.to_string_lossy(), test_file);
+
+        let _val: String = EnvValue::resolve("$HOME/file.txt").unwrap().into_inner();
+        assert_eq!(_val, test_file);
     }
 }

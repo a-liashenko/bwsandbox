@@ -46,7 +46,7 @@ fn load_toml<O: DeserializeOwned>(source: &impl AsRef<Path>) -> Result<O, Error>
 fn load_entry<O: DeserializeOwned>(entry: Entry<O>) -> Result<O, Error> {
     match entry {
         Entry::Inline(v) => Ok(v),
-        Entry::File { include } => load_toml(&include.as_ref()),
+        Entry::File { include } => load_toml(include.as_inner()),
     }
 }
 

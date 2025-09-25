@@ -87,7 +87,7 @@ fn new_dbus_proxy(cfg: DbusConfig, socket: &Path) -> Result<Command, Error> {
 
     let mut command = Command::new(cfg.bin);
     command
-        .arg(cfg.bus_address.into_string())
+        .arg(cfg.bus_address.into_inner())
         .arg(socket)
         .arg("--filter")
         .args(talk)
