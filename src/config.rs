@@ -20,9 +20,9 @@ impl AppConfig {
     pub fn load(config: impl AsRef<Path>) -> Result<Self, Error> {
         let profile: ProfileConfig = load_toml(&config)?;
 
-        if !profile.template.include.is_dir() {
+        if !profile.template.include.as_inner().is_dir() {
             let ec = std::io::Error::new(std::io::ErrorKind::NotADirectory, "Must be directory");
-            return Err(Error::File(profile.template.include, ec));
+            return Err(Error::File(profile.template.include.into_inner(), ec));
         }
 
         let seccomp = profile.seccomp.map(load_entry).transpose()?;

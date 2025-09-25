@@ -7,7 +7,7 @@ pub struct TemplateConfig {
     #[serde(default = "bwrap_bin")]
     pub bin: String,
     pub name: String,
-    pub include: PathBuf,
+    pub include: EnvValue<PathBuf>,
     pub context: BTreeMap<String, ContextValue>,
 }
 

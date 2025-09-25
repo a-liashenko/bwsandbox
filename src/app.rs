@@ -98,7 +98,7 @@ fn new_dbus_proxy(cfg: DbusConfig, socket: &Path) -> Result<Command, Error> {
 fn new_bwrap(cfg: TemplateConfig) -> Result<Command, Error> {
     let mut handlebars = handlebars::Handlebars::new();
     handlebars.set_strict_mode(true);
-    handlebars.register_templates_directory(cfg.include, Default::default())?;
+    handlebars.register_templates_directory(cfg.include.as_inner(), Default::default())?;
     let args = handlebars.render(&cfg.name, &cfg.context)?;
     let args = shlex::Shlex::new(&args).into_iter();
 
