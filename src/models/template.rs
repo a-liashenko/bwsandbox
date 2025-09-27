@@ -35,7 +35,7 @@ impl Serialize for ContextValue {
 #[test]
 fn test_parse_template_generic() {
     let content = include_str!("../../config/profile-games-rt.toml");
-    let config: toml::Value = toml::from_str(&content).expect("Failed to parse example config");
+    let config: toml::Value = toml::from_str(content).expect("Failed to parse example config");
 
     let template = config.get("template").unwrap().clone();
     let _config: TemplateConfig = template.try_into().unwrap();

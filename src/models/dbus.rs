@@ -19,12 +19,12 @@ fn dbus_proxy_bin() -> String {
 }
 
 fn dbus_address() -> EnvValue<String> {
-    EnvValue::resolve("$DBUS_SESSION_BUS_ADDRESS".into()).unwrap_or_default()
+    EnvValue::resolve("$DBUS_SESSION_BUS_ADDRESS").unwrap_or_default()
 }
 
 #[test]
 fn parse_dbus_generic() {
     let content = include_str!("../../config/dbus-generic.toml");
-    let _config: DbusConfig = toml::from_str(&content).expect("Failed to parse example config");
+    let _config: DbusConfig = toml::from_str(content).expect("Failed to parse example config");
     // dbg!(&_config);
 }

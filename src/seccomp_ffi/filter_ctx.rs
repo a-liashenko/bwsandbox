@@ -10,7 +10,7 @@ impl FilterCtx {
         use super::seccomp_init;
 
         let ptr = unsafe { seccomp_init(def_action.as_u32()) };
-        ensure!(ptr != ptr::null_mut(), "seccomp_init: nullptr");
+        ensure!(!ptr.is_null(), "seccomp_init: nullptr");
         Ok(Self(ptr))
     }
 

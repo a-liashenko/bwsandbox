@@ -39,6 +39,6 @@ impl<'de> Deserialize<'de> for Arch {
 #[test]
 fn test_parse_seccomp_generic() {
     let content = include_str!("../../config/seccomp-generic.toml");
-    let _config: SeccompConfig = toml::from_str(&content).expect("Failed to parse example config");
+    let _config: SeccompConfig = toml::from_str(content).expect("Failed to parse example config");
     dbg!(&_config);
 }

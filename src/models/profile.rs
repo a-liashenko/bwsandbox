@@ -23,6 +23,6 @@ pub enum Entry<T> {
 #[test]
 fn test_parse_games_rt() {
     let content = include_str!("../../config/profile-games-rt.toml");
-    let _config: ProfileConfig = toml::from_str(&content).expect("Failed to parse example config");
+    let _config: ProfileConfig = toml::from_str(content).expect("Failed to parse example config");
     // dbg!(&_config);
 }
