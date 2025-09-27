@@ -3,6 +3,7 @@ default_action = "SCMP_ACT_ALLOW"
 # required, can be empty
 extra_arch = ["x86"]
 
+# Stolen from https://github.com/igo95862/bubblejail
 [[rules]]
 # required
 action = "SCMP_ACT_ERRNO"
