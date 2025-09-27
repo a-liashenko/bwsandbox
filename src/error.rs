@@ -12,6 +12,10 @@ pub enum Error {
     Template(#[from] handlebars::TemplateError),
     #[error(transparent)]
     TemplateRender(#[from] handlebars::RenderError),
+    #[error("fcntl faile {0:?}")]
+    Fcntl(#[from] nix::Error),
+    #[error(transparent)]
+    Args(#[from] lexopt::Error),
     #[error(transparent)]
     Other(#[from] anyhow::Error),
 }
@@ -39,5 +43,9 @@ impl Error {
 
     pub fn spawn(source: &'static str) -> impl Fn(std::io::Error) -> Self {
         move |e| Self::Spawn(source, e)
+    }
+
+    pub fn new_other<E: Into<anyhow::Error>>(src: E) -> Self {
+        Error::Other(src.into())
     }
 }

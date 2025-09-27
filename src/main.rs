@@ -1,6 +1,10 @@
 use app::App;
 use error::Error;
-use std::process::{ExitCode, Stdio};
+use std::{
+    ffi::OsString,
+    path::PathBuf,
+    process::{ExitCode, Stdio},
+};
 
 mod app;
 mod config;
@@ -9,25 +13,24 @@ mod models;
 mod run_scope;
 mod seccomp_ffi;
 
+pub const APP_NAME: &str = env!("CARGO_PKG_NAME");
+
 fn main() -> ExitCode {
-    let mut args = std::env::args().skip(1);
-    if args.len() < 4 {
+    let args = std::env::args_os().skip(1);
+    let (config, mut app_args) = match parse_args(args) {
+        Ok(v) => v,
+        Err(e) => {
+            on_error(e);
+            return on_help();
+        }
+    };
+
+    if app_args.len() < 1 {
         return on_help();
     }
 
-    let config_opt = args.next().unwrap(); // 1
-    let config_val = args.next().unwrap(); // 2
-    if config_opt != "--config" {
-        return on_help();
-    }
-
-    let seaparator = args.next().unwrap(); // 3
-    if seaparator != "--" {
-        return on_help();
-    }
-
-    let app_name = args.next().unwrap(); // 4
-    let app = match App::new(app_name, args, config_val) {
+    let app_name = app_args.remove(0);
+    let app = match App::new(app_name, app_args.into_iter(), config) {
         Ok(v) => v,
         Err(e) => return on_error(e),
     };
@@ -40,23 +43,41 @@ fn main() -> ExitCode {
     code
 }
 
-fn on_help() -> ExitCode {
-    let exe = std::env::current_exe()
-        .map(|v| {
-            v.file_name()
-                .map(|v| v.to_string_lossy().into_owned())
-                .unwrap_or("app".into())
-        })
-        .unwrap_or("app".into());
-    let help = format!("Usage example: {} --config config.toml -- app --arg 1", exe);
-    println!("{help}");
+fn parse_args<I>(args: I) -> Result<(PathBuf, Vec<String>), Error>
+where
+    I: Iterator<Item = OsString>,
+{
+    use lexopt::prelude::*;
+    let mut config_file: Option<String> = None;
+    let mut config_name: Option<String> = None;
+    let mut rest = vec![];
 
-    ExitCode::FAILURE
-}
+    let mut parser = lexopt::Parser::from_args(args);
+    while let Some(arg) = parser.next()? {
+        match arg {
+            Short('f') | Long("config-file") => {
+                config_file = Some(parser.value()?.string()?);
+            }
+            Short('n') | Long("config-name") => {
+                config_name = Some(parser.value()?.string()?);
+            }
+            Value(v) => {
+                rest.push(v.string()?);
+            }
+            _ => return Err(arg.unexpected().into()),
+        }
+    }
 
-fn on_error(e: Error) -> ExitCode {
-    println!("{e:#?}");
-    ExitCode::FAILURE
+    let config = match (config_file, config_name) {
+        (Some(config), _) => PathBuf::from(config),
+        (_, Some(config)) => std::env::var("XDG_CONFIG_HOME")
+            .map(PathBuf::from)
+            .map(|v| v.join(APP_NAME).join(format!("{config}.toml")))
+            .map_err(Error::new_other)?,
+        _ => unreachable!(),
+    };
+
+    Ok((config, rest))
 }
 
 fn start_sandbox(mut app: App) -> Result<ExitCode, Error> {
@@ -81,4 +102,55 @@ fn start_sandbox(mut app: App) -> Result<ExitCode, Error> {
     let app_code = app_runner();
     let _dbus_err = dbus.and_then(|mut v| v.kill().err());
     Ok(app_code?)
+}
+
+fn on_help() -> ExitCode {
+    let help = format!(
+        "Usage example: {} --config config.toml -- app --arg 1",
+        APP_NAME
+    );
+    println!("{help}");
+    ExitCode::FAILURE
+}
+
+fn on_error(e: Error) -> ExitCode {
+    println!("{e:#?}");
+    ExitCode::FAILURE
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_config_resolution() {
+        let config_name = "profile-test";
+        let config_dir = "/test/.config";
+        let config = format!("{config_dir}/{APP_NAME}/{config_name}.toml");
+        unsafe { std::env::set_var("XDG_CONFIG_HOME", config_dir) };
+
+        let args = vec!["--config-file".into(), config.clone().into(), "sh".into()];
+        let (cfg, _) = parse_args(args.into_iter()).unwrap();
+        assert_eq!(cfg.display().to_string(), config);
+
+        let args = vec!["--config-name".into(), config_name.into(), "sh".into()];
+        let (cfg, _) = parse_args(args.into_iter()).unwrap();
+        assert_eq!(cfg.display().to_string(), config);
+    }
+
+    #[test]
+    fn test_app_args() {
+        let cmd = &["sh", "--option", "value", "positional"];
+
+        let args = &["-f", "f", "--"];
+        let full_args = args.iter().chain(cmd).map(OsString::from);
+        let (_, app_args) = parse_args(full_args).unwrap();
+        assert_eq!(app_args, cmd);
+
+        // Should return error because of missing --
+        let args = &["-f", "f"];
+        let full_args = args.iter().chain(cmd).map(OsString::from);
+        let res = parse_args(full_args);
+        assert!(res.is_err());
+    }
 }
