@@ -3,7 +3,7 @@
 --chdir {{DST_HOME}}
 
 {{!-- # Shared utils dir --}}
---ro-bind  /opt /opt
+--ro-bind /opt /opt
 
 {{!-- # Shared games dirs --}}
 --bind-try /mnt/shared/games       /mnt/shared/games
@@ -24,6 +24,12 @@
 
 --setenv MALLOC_ARENA_MAX 2
 --setenv WINE_LARGE_ADDRESS_AWARE 1
+
+{{!-- # Share XWayland sockets, pre-create .X11-unix so it will have $USER as owner instead of root (nobody) --}}
+{{!-- # .11-unix owned by $USER or root is required for gamescope --}}
+--dir  /tmp/.X11-unix 
+--bind /tmp/.X11-unix/X0  /tmp/.X11-unix/X0
+--bind /tmp/.X11-unix/X0_ /tmp/.X11-unix/X0_
 
 {{> bw-base }}
 {{> bw-base-user }}
