@@ -5,7 +5,7 @@ use crate::{
     run_scope::RunScope,
     seccomp_ffi::FilterCtx,
 };
-use std::{ffi::OsStr, os::fd::AsRawFd, path::Path, process::Command};
+use std::{ffi::OsStr, io::Seek, os::fd::AsRawFd, path::Path, process::Command};
 
 #[derive(Debug)]
 pub struct App {
@@ -33,14 +33,13 @@ impl App {
         let seccomp = config.seccomp.map(new_seccomp).transpose()?;
         if let Some(seccomp) = seccomp {
             use nix::fcntl::{F_SETFD, FdFlag, fcntl};
-            let (path, mut file) = scope.new_file("seccomp")?;
-            seccomp.export_bpf(&mut file)?;
 
-            let file = std::fs::File::open(&path).map_err(Error::file(&path))?;
-            fcntl(&file, F_SETFD(FdFlag::empty()))
-                .map_err(|e| anyhow::anyhow!("fcntl failed: {e:?}"))?;
+            let (_, file) = scope.new_file_scoped("seccomp")?;
+            seccomp.export_bpf(file)?;
+            file.rewind().map_err(Error::new_other)?;
+
+            fcntl(&file, F_SETFD(FdFlag::empty())).map_err(Error::Fcntl)?;
             bwrap.arg("--seccomp").arg(file.as_raw_fd().to_string());
-            scope.add_file(path, file);
         }
 
         let dbus = config
