@@ -1,16 +1,12 @@
 use app::App;
 use error::Error;
-use std::{
-    ffi::OsString,
-    path::PathBuf,
-    process::{ExitCode, Stdio},
-};
+use std::{ffi::OsString, path::PathBuf, process::ExitCode};
 
 mod app;
 mod config;
 mod error;
 mod models;
-mod run_scope;
+mod paths;
 mod seccomp_ffi;
 
 pub const APP_NAME: &str = env!("CARGO_PKG_NAME");
@@ -20,12 +16,12 @@ fn main() -> ExitCode {
     let (config, mut app_args) = match parse_args(args) {
         Ok(v) => v,
         Err(e) => {
-            on_error(e);
-            return on_help();
+            on_help();
+            return on_error(e);
         }
     };
 
-    if app_args.len() < 1 {
+    if app_args.is_empty() {
         return on_help();
     }
 
@@ -35,12 +31,24 @@ fn main() -> ExitCode {
         Err(e) => return on_error(e),
     };
 
-    let code = match start_sandbox(app) {
-        Ok(v) => v,
-        Err(e) => return on_error(e),
-    };
+    match app.run_app() {
+        Ok(v) => {
+            let code = v.code().unwrap_or(-1);
+            std::process::exit(code);
+        }
+        Err(e) => on_error(e),
+    }
+}
 
-    code
+fn on_help() -> ExitCode {
+    let help = format!("Usage example: {APP_NAME} --config config.toml -- app --arg 1",);
+    println!("{help}");
+    ExitCode::SUCCESS
+}
+
+fn on_error(e: Error) -> ExitCode {
+    println!("{e:#?}");
+    ExitCode::FAILURE
 }
 
 fn parse_args<I>(args: I) -> Result<(PathBuf, Vec<String>), Error>
@@ -70,52 +78,13 @@ where
 
     let config = match (config_file, config_name) {
         (Some(config), _) => PathBuf::from(config),
-        (_, Some(config)) => std::env::var("XDG_CONFIG_HOME")
-            .map(PathBuf::from)
-            .map(|v| v.join(APP_NAME).join(format!("{config}.toml")))
-            .map_err(Error::new_other)?,
-        _ => unreachable!(),
+        (_, Some(config)) => paths::xdg_config_home()?
+            .join(paths::APP_NAME)
+            .join(format!("{config}.toml")),
+        _ => return Err(anyhow::anyhow!("Missing args").into()),
     };
 
     Ok((config, rest))
-}
-
-fn start_sandbox(mut app: App) -> Result<ExitCode, Error> {
-    let dbus = app
-        .dbus
-        .map(|mut v| v.stdin(Stdio::null()).stdout(Stdio::null()).spawn())
-        .transpose()
-        .map_err(Error::spawn("DBus proxy"))?;
-
-    let mut app_runner = move || -> Result<ExitCode, Error> {
-        let mut bwrap = app.bwrap.spawn().map_err(Error::spawn("App"))?;
-        let status = bwrap.wait().map_err(Error::spawn("App"))?;
-
-        let code = if status.success() {
-            ExitCode::SUCCESS
-        } else {
-            ExitCode::FAILURE
-        };
-        Ok(code)
-    };
-
-    let app_code = app_runner();
-    let _dbus_err = dbus.and_then(|mut v| v.kill().err());
-    Ok(app_code?)
-}
-
-fn on_help() -> ExitCode {
-    let help = format!(
-        "Usage example: {} --config config.toml -- app --arg 1",
-        APP_NAME
-    );
-    println!("{help}");
-    ExitCode::FAILURE
-}
-
-fn on_error(e: Error) -> ExitCode {
-    println!("{e:#?}");
-    ExitCode::FAILURE
 }
 
 #[cfg(test)]

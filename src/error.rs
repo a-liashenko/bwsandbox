@@ -44,8 +44,4 @@ impl Error {
     pub fn spawn(source: &'static str) -> impl Fn(std::io::Error) -> Self {
         move |e| Self::Spawn(source, e)
     }
-
-    pub fn new_other<E: Into<anyhow::Error>>(src: E) -> Self {
-        Error::Other(src.into())
-    }
 }
