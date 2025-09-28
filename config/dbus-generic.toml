@@ -1,0 +1,10 @@
+own = []
+talk = [
+    "org.freedesktop.DBus",
+    "org.freedesktop.portal.Desktop",
+    "org.freedesktop.portal.Settings",
+    "org.freedesktop.portal.FileChooser",
+    "org.freedesktop.Notifications",
+    "org.kde.StatusNotifierWatcher",
+    "org.gtk.gio.StyleMonitor",
+]
