@@ -69,7 +69,6 @@ impl Service for DbusService {
         let child = self
             .command
             .stdin(Stdio::null())
-            .stdout(Stdio::null())
             .spawn()
             .map_err(AppError::spawn("dbus-proxy"))?;
 
