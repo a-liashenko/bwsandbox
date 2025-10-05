@@ -1,80 +1,91 @@
-use crate::{config::AppConfig, error::Error, models::template::TemplateConfig, paths};
+use crate::{
+    config::Entry,
+    error::AppError,
+    service::{Handle, Scope, Service},
+    utils,
+};
 use std::{
-    ffi::OsStr,
-    path::Path,
-    process::{Command, ExitStatus},
+    ffi::{OsStr, OsString},
+    process::ExitStatus,
 };
 
-pub use dbus::Dbus;
-pub use seccomp::Seccomp;
+mod config;
+mod sandbox;
 
-mod dbus;
-mod seccomp;
+use config::Config;
+use sandbox::Sandbox;
 
 #[derive(Debug)]
-pub struct App {
-    pub seccomp: Option<Seccomp>,
-    pub dbus: Option<Dbus>,
-    pub bwrap: Command,
+pub struct App<D, S> {
+    sandbox: Sandbox,
+    dbus: Option<D>,
+    seccomp: Option<S>,
 }
 
-impl App {
-    pub fn new<App, Args, C>(app: App, app_args: Args, config: C) -> Result<Self, Error>
-    where
-        App: AsRef<Path>,
-        Args: Iterator<Item = String>,
-        C: AsRef<Path>,
-    {
-        let app_name = app.as_ref().file_name().and_then(OsStr::to_str);
-        let app_name = app_name.ok_or_else(|| anyhow::anyhow!("Missing app"))?;
+impl<D: Service, S: Service> App<D, S> {
+    pub fn from_str(content: &str) -> Result<Self, AppError> {
+        let config: Config<D::Config, S::Config> = toml::from_str(content)?;
 
-        let config = AppConfig::load(config)?;
-        let mut bwrap = new_bwrap(config.template)?;
-
-        let seccomp = config.seccomp.map(|cfg| -> Result<_, Error> {
-            let path = paths::temp_file(app_name, "seccomp");
-            let seccomp = Seccomp::new(cfg, path)?;
-            bwrap.arg("--seccomp").arg(seccomp.fd().to_string());
-            Ok(seccomp)
-        });
-
-        let dbus = config.dbus.map(|cfg| -> Result<_, Error> {
-            let socket = paths::temp_file(app_name, "dbus");
-            let mounted = paths::xdg_runtime_dir()?.join("bus");
-
-            let dbus = Dbus::new(cfg, socket.clone())?;
-            bwrap.arg("--bind").arg(socket).arg(mounted);
-            Ok(dbus)
-        });
-
-        bwrap.arg(app.as_ref()).args(app_args);
+        let sandbox = config.bwrap.into_command(utils::BWRAP_CMD)?;
+        let seccomp = config.seccomp.map(service_load).transpose()?;
+        let dbus = config.dbus.map(service_load).transpose()?;
 
         Ok(Self {
-            bwrap,
-            dbus: dbus.transpose()?,
-            seccomp: seccomp.transpose()?,
+            sandbox: Sandbox::new(sandbox),
+            seccomp,
+            dbus,
         })
     }
 
-    pub fn run_app(mut self) -> Result<ExitStatus, Error> {
-        // Cleanup will be called on drop
-        let _seccomp = self.seccomp.take();
-        let _dbus = self.dbus.map(|v| v.spawn()).transpose()?;
+    pub fn apply_services(&mut self) -> Result<(), AppError> {
+        self.sandbox.apply_opt(self.seccomp.as_mut())?;
+        self.sandbox.apply_opt(self.dbus.as_mut())?;
+        Ok(())
+    }
 
-        let mut bwrap = self.bwrap.spawn().map_err(Error::spawn("app"))?;
-        let status = bwrap.wait().map_err(Error::spawn("app"))?;
-        Ok(status)
+    pub fn run<A, I>(self, app: A, args: I) -> Result<ExitStatus, AppError>
+    where
+        A: AsRef<OsStr>,
+        I: Iterator<Item = OsString>,
+    {
+        let seccomp = self.seccomp.map(Service::start).transpose()?;
+        let dbus = self.dbus.map(Service::start).transpose()?;
+
+        let (mut command, scope) = self.sandbox.into_parts();
+        let command = command.arg(app).args(args);
+        tracing::info!("bwrap command: {command:?}");
+
+        let exit_status = command.spawn().map_err(AppError::spawn("bwrap"))?.wait();
+
+        seccomp.map(S::Handle::stop);
+        dbus.map(D::Handle::stop);
+        destroy_scope(scope.into_iter());
+
+        exit_status.map_err(AppError::spawn("bwrap"))
     }
 }
 
-fn new_bwrap(cfg: TemplateConfig) -> Result<Command, Error> {
-    let mut handlebars = handlebars::Handlebars::new();
-    handlebars.set_strict_mode(true);
-    handlebars.register_templates_directory(cfg.include.as_inner(), Default::default())?;
-    let args = handlebars.render(&cfg.name, &cfg.context)?;
-    let args = shlex::Shlex::new(&args);
+#[tracing::instrument]
+fn service_load<S: Service>(config: Entry<S::Config>) -> Result<S, AppError> {
+    let config = match config {
+        Entry::Inline(v) => v,
+        Entry::Include { include } => {
+            let path = include.as_inner();
+            let content = std::fs::read_to_string(path).map_err(AppError::file(path))?;
+            toml::from_str(&content)?
+        }
+    };
 
-    let mut command = Command::new(cfg.bin);
-    command.args(args);
-    Ok(command)
+    let service = S::from_config(config)?;
+    Ok(service)
+}
+
+#[tracing::instrument(skip_all)]
+fn destroy_scope(iter: impl Iterator<Item = Scope>) {
+    let files = iter.flat_map(|v| v.remove.into_iter());
+    for file in files {
+        if let Err(e) = std::fs::remove_file(&file) {
+            tracing::warn!("Failed to remove {file:?}, err {e}");
+        }
+    }
 }

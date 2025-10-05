@@ -1,11 +1,12 @@
-{{!-- # base options --}}
+# base options
 --new-session
 --die-with-parent
 --unshare-all
 --share-net
 --cap-drop all
 
-{{!-- # base system --}}
+# base system
+# TODO: Probably /sys can be restricted
 --proc /proc
 --ro-bind /sys /sys
 --ro-bind /usr /usr
@@ -16,7 +17,7 @@
 
 --ro-bind /var/cache/fontconfig /var/cache/fontconfig
 
-{{!-- # /etc minimal --}}
+# Minimal /etc environment
 --ro-bind /etc/passwd /etc/passwd
 --ro-bind /etc/group /etc/group
 --ro-bind /etc/resolv.conf /etc/resolv.conf
@@ -36,19 +37,24 @@
 --ro-bind /etc/services /etc/services
 --ro-bind /etc/host.conf /etc/host.conf
 
+# Required by steam
 --ro-bind /etc/ld.so.conf.d /etc/ld.so.conf.d
 --ro-bind /etc/ld.so.conf /etc/ld.so.conf
 --ro-bind /etc/ld.so.cache /etc/ld.so.cache
 
-{{!-- # /etc extra --}}
+# Extra apps
 --ro-bind-try /etc/X11 /etc/X11
 --ro-bind-try /etc/java-openjdk /etc/java-openjdk
 
-{{!-- # /dev minimal + GPU accel + NTsync for proton --}}
+# Dev minimal
 --dev /dev
 --dev-bind /dev/urandom /dev/urandom
 --dev-bind /dev/null /dev/null
 --dev-bind /dev/shm /dev/shm
+
+# GPU related devices
 --dev-bind-try /dev/dri /dev/dri
 --dev-bind-try /dev/kfd /dev/kfd
+
+# Proton sync
 --dev-bind-try /dev/ntsync /dev/ntsync

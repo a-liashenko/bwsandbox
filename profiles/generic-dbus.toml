@@ -1,0 +1,16 @@
+user_bus = "$DBUS_SESSION_BUS_ADDRESS"
+proxy_bus = "dbus-proxy"
+sandboxed_bus = "$XDG_RUNTIME_DIR/bus"
+
+inline = [
+    { type = "str", value = "--filter" },
+
+    { type = "str", value = "--talk=org.freedesktop.DBus" },
+    { type = "str", value = "--talk=org.freedesktop.portal.Desktop" },
+    { type = "str", value = "--talk=org.freedesktop.portal.Settings" },
+    { type = "str", value = "--talk=org.freedesktop.portal.FileChooser" },
+    { type = "str", value = "--talk=org.freedesktop.portal.Notifications" },
+    { type = "str", value = "--talk=org.kde.StatusNotifierWatcher" },
+
+    { type = "str", value = "--own=net.lutris.Lutris" },
+]

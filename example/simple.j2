@@ -1,0 +1,9 @@
+# Bind hardcoded values
+--ro-bind /etc/os-release /etc/os-release
+
+# Bind using variable from .toml config context
+
+{% if lsb is defined %}
+    --ro-bind {{lsb}} {{lsb}}
+{% endif %}
+

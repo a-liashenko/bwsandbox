@@ -1,0 +1,77 @@
+# Simple config
+
+# Get lsb release from sandbox
+# cargo run -- -f ./example/simple.toml -- cat /etc/os-release
+
+# Get os release from sandbox
+# cargo run -- -f ./example/simple.toml -- cat /etc/lsb-release
+
+# Example seccomp filter, ls will return error if enabled
+# Comment [seccomp] section to disable seccomp restrictions
+# cargo run -- -f ./example/simple.toml -- ls /etc
+
+# Example dbus filter, only org.freedesktop.DBus allowed
+# Comment [dbus] section to disabled dbus proxy
+# cargo run -- -f ./example/simple.toml -- dbus-send --type=method_call --print-reply --dest=org.freedesktop.DBus / org.freedesktop.DBus.ListNames
+
+# Required
+[bwrap]
+# Optional, default bwrap
+# bin = "bwrap"
+
+# Optional, inline and/or template should be used
+inline = [
+    # Bind host /usr as read-only /usr in sandbox
+    { type = "str", value = "--ro-bind" },
+    { type = "str", value = "/usr" },
+    { type = "str", value = "/usr" },
+
+    # Symlink /usr/lib as /usr/lib64
+    { type = "str", value = "--symlink" },
+    { type = "str", value = "usr/lib" },
+    { type = "str", value = "/lib64" },
+]
+
+# Optional, inline and/or template should be used
+[bwrap.template]
+# Required, template name
+# Bind /etc/lsb-release and /etc/os-release into sandbox
+name = "simple.j2"
+# Required, template dir
+dir = "./example"
+
+# Required
+[bwrap.template.context]
+# Now all jinja templates will have access to 'lsb' value
+lsb = { type = "str", value = "/etc/lsb-release" }
+
+
+# Optional, block getdents64 syscall
+[seccomp]
+# Required, can be 'include' or 'inline'
+type = "include"
+# Required if type 'include'
+include = "./example/simple-seccomp.toml"
+
+
+# Optional, uncomment to filter dbus calls
+[dbus]
+# Optional
+# bin = "xdg-dbus-proxy"
+
+# Required, can be 'include' or 'inline'
+type = "inline"
+
+# Required, user session dbus
+user_bus = "$DBUS_SESSION_BUS_ADDRESS"
+# Required, temp file name for proxy socket location on host. By default created in $XDG_RUNTIME_DIR
+proxy_bus = "dbus-proxy"
+# Required, proxy socket location in sandbox
+sandboxed_bus = "$XDG_RUNTIME_DIR/bus"
+
+# Options, same as bwrap -- 'inline' or 'template' can be used
+inline = [
+    #
+    { type = "str", value = "--filter" },
+    { type = "str", value = "--talk=org.freedesktop.DBus" },
+]

@@ -1,4 +1,4 @@
-use super::{Action, Arch, Syscall};
+use super::{Action, Arch, Syscall, Version};
 use anyhow::ensure;
 use std::{ffi::c_void, fs::File, os::fd::AsRawFd, ptr};
 
@@ -6,22 +6,27 @@ use std::{ffi::c_void, fs::File, os::fd::AsRawFd, ptr};
 pub struct FilterCtx(*mut c_void);
 
 impl FilterCtx {
+    #[tracing::instrument]
     pub fn new(def_action: Action) -> anyhow::Result<Self> {
         use super::seccomp_init;
 
-        let ptr = unsafe { seccomp_init(def_action.as_u32()) };
+        Version::new().verify_version(2, 5);
+
+        let ptr = unsafe { seccomp_init(def_action.as_uint()) };
         ensure!(!ptr.is_null(), "seccomp_init: nullptr");
         Ok(Self(ptr))
     }
 
+    #[tracing::instrument]
     pub fn rule_add(&mut self, act: Action, syscall: Syscall) -> anyhow::Result<()> {
         use super::seccomp_rule_add;
 
-        let res = unsafe { seccomp_rule_add(self.0, act.as_u32(), syscall.raw(), 0) };
+        let res = unsafe { seccomp_rule_add(self.0, act.as_uint(), syscall.raw(), 0) };
         ensure!(res == 0, "seccomp_rule_add: {res}");
         Ok(())
     }
 
+    #[tracing::instrument]
     pub fn arch_add(&mut self, arch: Arch) -> anyhow::Result<()> {
         use super::seccomp_arch_add;
 
@@ -39,6 +44,7 @@ impl FilterCtx {
         Ok(())
     }
 
+    #[tracing::instrument]
     pub fn export_bpf(&self, file: &mut File) -> anyhow::Result<()> {
         use super::seccomp_export_bpf;
 

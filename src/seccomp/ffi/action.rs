@@ -12,8 +12,8 @@ pub enum Action {
 }
 
 impl Action {
-    pub fn as_u32(self) -> u32 {
-        self as u32
+    pub fn as_uint(self) -> std::ffi::c_uint {
+        self as std::ffi::c_uint
     }
 }
 
@@ -27,5 +27,5 @@ fn test_deser() {
     let value = "action = 'SCMP_ACT_KILL'";
     let parsed: Test = toml::from_str(value).unwrap();
     assert_eq!(parsed.action, Action::Kill);
-    assert_eq!(parsed.action.as_u32(), crate::seccomp_ffi::SCMP_ACT_KILL);
+    assert_eq!(parsed.action.as_uint(), super::SCMP_ACT_KILL);
 }

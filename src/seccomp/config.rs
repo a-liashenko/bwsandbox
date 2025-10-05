@@ -1,15 +1,15 @@
-use crate::seccomp_ffi::{Action, Arch, Syscall};
+use super::ffi::{Action, Arch, Syscall};
 use serde::{Deserialize, Deserializer, de::Error};
 
 #[derive(Debug, Deserialize)]
-pub struct SeccompConfig {
+pub struct Config {
     pub default_action: Action,
     pub extra_arch: Vec<Arch>,
-    pub rules: Vec<SeccompRule>,
+    pub rules: Vec<Rule>,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct SeccompRule {
+pub struct Rule {
     pub action: Action,
     pub syscalls: Vec<Syscall>,
 }
@@ -37,8 +37,15 @@ impl<'de> Deserialize<'de> for Arch {
 }
 
 #[test]
-fn test_parse_seccomp_generic() {
-    let content = include_str!("../../config/seccomp-generic.toml");
-    let _config: SeccompConfig = toml::from_str(content).expect("Failed to parse example config");
-    dbg!(&_config);
+fn test_parse_seccomp() {
+    let seccomp = toml::toml! {
+        default_action = "SCMP_ACT_KILL"
+        extra_arch = ["x86"]
+        rules = [
+            { action = "SCMP_ACT_ERRNO", syscalls = ["open", "close"] },
+            { action = "SCMP_ACT_ALLOW", syscalls = ["open"] }
+        ]
+    };
+    let v = toml::to_string_pretty(&seccomp).unwrap();
+    let _v: Config = toml::from_str(&v).unwrap();
 }

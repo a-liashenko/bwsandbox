@@ -1,0 +1,10 @@
+# Required
+default_action = "SCMP_ACT_ALLOW"
+
+# Required, can be empty
+extra_arch = ["x86"]
+
+[[rules]]
+action = "SCMP_ACT_ERRNO"
+# Block dir read syscall
+syscalls = ["getdents64"]

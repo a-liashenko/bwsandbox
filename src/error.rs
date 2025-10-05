@@ -1,47 +1,44 @@
-use std::path::{Path, PathBuf};
+use std::{
+    os::fd::RawFd,
+    path::{Path, PathBuf},
+};
 
 #[derive(Debug, thiserror::Error)]
-pub enum Error {
-    #[error("File {0}: {1:#?}")]
+pub enum AppError {
+    #[error("File {0:?}: {1:?}")]
     File(PathBuf, std::io::Error),
-    #[error("Toml deser {0}: {1:#?}")]
-    TomlDeser(PathBuf, toml::de::Error),
-    #[error("Spawn {0}: {1:#?}")]
-    Spawn(&'static str, std::io::Error),
+    #[error("Failed to use fcntl to share fd {0} with forked apps, ec {1}")]
+    FileFdShare(RawFd, rustix::io::Errno),
+    #[error("Failed to alloc new tempfile, ec {0:?}")]
+    FileTempAlloc(std::io::Error),
+    #[error("Env {0:?}: {1:?}")]
+    Env(String, std::env::VarError),
+    #[error("Failed to parse config {msg}", msg = .0.message())]
+    Config(#[from] toml::de::Error),
+    #[error("Template: {0:?}")]
+    Template(#[from] minijinja::Error),
+    #[error("Spawn {0:?}: {1:?}")]
+    Spawn(String, std::io::Error),
+    #[error("Unexpected or missing arguments")]
+    BadArgs,
     #[error(transparent)]
-    Template(#[from] handlebars::TemplateError),
-    #[error(transparent)]
-    TemplateRender(#[from] handlebars::RenderError),
-    #[error("fcntl faile {0:?}")]
-    Fcntl(#[from] nix::Error),
-    #[error(transparent)]
-    Args(#[from] lexopt::Error),
-    #[error(transparent)]
-    Other(#[from] anyhow::Error),
+    ArgParser(#[from] lexopt::Error),
+    #[error("Failed ffi call to libseccomp {0:?}")]
+    SeccompLib(anyhow::Error),
+    // #[error(transparent)]
+    // Other(#[from] anyhow::Error),
 }
 
-impl Error {
-    fn path_err<S, B, E>(source: &S, builder: B) -> impl Fn(E) -> Self
-    where
-        S: AsRef<Path>,
-        B: Fn(PathBuf, E) -> Self,
-        B: 'static,
-    {
-        move |e| {
-            let source = source.as_ref().to_owned();
-            builder(source, e)
-        }
+impl AppError {
+    pub fn file(src: impl AsRef<Path>) -> impl Fn(std::io::Error) -> Self {
+        move |e| Self::File(src.as_ref().into(), e)
     }
 
-    pub fn file(source: &impl AsRef<Path>) -> impl Fn(std::io::Error) -> Self {
-        Self::path_err(source, Error::File)
+    pub fn env(src: impl AsRef<str>) -> impl Fn(std::env::VarError) -> Self {
+        move |e| Self::Env(src.as_ref().into(), e)
     }
 
-    pub fn parse(source: &impl AsRef<Path>) -> impl Fn(toml::de::Error) -> Self {
-        Self::path_err(source, Error::TomlDeser)
-    }
-
-    pub fn spawn(source: &'static str) -> impl Fn(std::io::Error) -> Self {
-        move |e| Self::Spawn(source, e)
+    pub fn spawn(src: impl AsRef<str>) -> impl Fn(std::io::Error) -> Self {
+        move |e| Self::Spawn(src.as_ref().into(), e)
     }
 }

@@ -1,0 +1,22 @@
+[seccomp]
+type = "include"
+include = "$XDG_CONFIG_HOME/bwsandbox/generic-seccomp.toml"
+
+[dbus]
+type = "include"
+include = "$XDG_CONFIG_HOME/bwsandbox/generic-dbus.toml"
+
+[bwrap.template]
+name = "generic.j2"
+dir = "$XDG_CONFIG_HOME/bwsandbox/templates"
+
+[bwrap.template.context]
+SANDBOXED_HOME = { type = "env", value = "$HOME/games-rt" }
+
+SRC_HOME = { type = "env", value = "$HOME" }
+DST_HOME = { type = "env", value = "$HOME" }
+
+SRC_XDG_RUNTIME_DIR = { type = "env", value = "$XDG_RUNTIME_DIR" }
+DST_XDG_RUNTIME_DIR = { type = "env", value = "$XDG_RUNTIME_DIR" }
+
+WAYLAND_DISPLAY = { type = "env", value = "$WAYLAND_DISPLAY" }
