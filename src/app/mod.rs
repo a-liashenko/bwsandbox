@@ -1,7 +1,8 @@
 use crate::{
+    app::scope_destroyer::ScopeDestroyer,
     config::Entry,
     error::AppError,
-    service::{Handle, Scope, Service},
+    service::{Handle, Service},
     utils,
 };
 use std::{
@@ -11,6 +12,7 @@ use std::{
 
 mod config;
 mod sandbox;
+mod scope_destroyer;
 
 use config::Config;
 use sandbox::Sandbox;
@@ -55,11 +57,12 @@ impl<D: Service, S: Service> App<D, S> {
         let command = command.arg(app).args(args);
         tracing::info!("bwrap command: {command:?}");
 
+        let scopes = ScopeDestroyer::new(scope)?;
         let exit_status = command.spawn().map_err(AppError::spawn("bwrap"))?.wait();
+        drop(scopes);
 
         seccomp.map(S::Handle::stop);
         dbus.map(D::Handle::stop);
-        destroy_scope(scope.into_iter());
 
         exit_status.map_err(AppError::spawn("bwrap"))
     }
@@ -78,14 +81,4 @@ fn service_load<S: Service>(config: Entry<S::Config>) -> Result<S, AppError> {
 
     let service = S::from_config(config)?;
     Ok(service)
-}
-
-#[tracing::instrument(skip_all)]
-fn destroy_scope(iter: impl Iterator<Item = Scope>) {
-    let files = iter.flat_map(|v| v.remove.into_iter());
-    for file in files {
-        if let Err(e) = std::fs::remove_file(&file) {
-            tracing::warn!("Failed to remove {file:?}, err {e}");
-        }
-    }
 }

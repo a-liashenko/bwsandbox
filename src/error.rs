@@ -25,6 +25,8 @@ pub enum AppError {
     ArgParser(#[from] lexopt::Error),
     #[error("Failed ffi call to libseccomp {0:?}")]
     SeccompLib(anyhow::Error),
+    #[error("Failed to register ctrl+c handle")]
+    CtrlC(#[from] ctrlc::Error),
     // #[error(transparent)]
     // Other(#[from] anyhow::Error),
 }

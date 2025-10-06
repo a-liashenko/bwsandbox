@@ -17,6 +17,7 @@ toml = { version = "0.9", default-features = false, features = ["std", "serde", 
 tracing = { version = "0.1", default-features = false, features = ["std", "attributes"] }
 lexopt = { version = "0.3", default-features = false }
 tracing-subscriber = { version = "0.3", default-features = false, features = ["ansi", "env-filter", "fmt", "registry"] }
+ctrlc = { version = "3.5.0", default-features = false, features = ["termination"] }
 
 [dev-dependencies]
 toml = { version = "*", default-features = false, features = ["display"] }
