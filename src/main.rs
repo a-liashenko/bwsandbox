@@ -46,6 +46,12 @@ fn run(args: args::Args) -> Result<(), error::AppError> {
     let mut app = App::from_str(&args.config)?;
     app.apply_services()?;
 
+    // Should work for appimage v2
+    // https://github.com/AppImage/AppImageKit/issues/841
+    if args.is_app_image {
+        unsafe { std::env::set_var("APPIMAGE_EXTRACT_AND_RUN", "1") };
+    }
+
     let status = app.run(args.app, args.app_args.into_iter())?;
     std::process::exit(status.code().unwrap_or(-1));
 }
