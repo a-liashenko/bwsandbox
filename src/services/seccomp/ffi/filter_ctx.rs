@@ -74,7 +74,7 @@ fn test_workflow() {
     let syscall = Syscall::from_str("openat").unwrap();
     ctx.rule_add(Action::Errno, syscall).unwrap();
 
-    assert!(File::open("/etc/hostname").is_ok());
+    assert!(File::open("/etc/hosts").is_ok());
     ctx.load().unwrap();
-    assert!(File::open("/etc/hostname").is_err());
+    assert!(File::open("/etc/hosts").is_err());
 }
