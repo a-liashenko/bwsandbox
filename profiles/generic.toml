@@ -6,6 +6,10 @@ include = "$XDG_CONFIG_HOME/bwsandbox/generic-seccomp.toml"
 type = "include"
 include = "$XDG_CONFIG_HOME/bwsandbox/generic-dbus.toml"
 
+[env_mapper]
+type = 'include'
+include = "$XDG_CONFIG_HOME/bwsandbox/generic-env.toml"
+
 [bwrap.template]
 name = "generic.j2"
 dir = "$XDG_CONFIG_HOME/bwsandbox/templates"
@@ -20,43 +24,3 @@ SRC_XDG_RUNTIME_DIR = { type = "env", value = "$XDG_RUNTIME_DIR" }
 DST_XDG_RUNTIME_DIR = { type = "env", value = "$XDG_RUNTIME_DIR" }
 
 WAYLAND_DISPLAY = { type = "env", value = "$WAYLAND_DISPLAY" }
-
-[env_mapper]
-type = 'inline'
-keep = [
-    'APPIMAGE_EXTRACT_AND_RUN',
-
-    'USER',
-    'HOME',
-    'PATH',
-
-    'LANG',
-    'LANGUAGE',
-    'TERM',
-    'COLORTERM',
-
-    'WAYLAND_DISPLAY',
-    'DISPLAY',
-
-    'XDG_SESSION_TYPE',
-    'XDG_SESSION_DESKTOP',
-    'XDG_CURRENT_DESKTOP',
-
-    'XDG_RUNTIME_DIR',
-    'DBUS_SESSION_BUS_ADDRESS',
-    'XDG_CONFIG_HOME',
-    'XDG_DATA_HOME',
-    'XDG_CACHE_HOME',
-    'XDG_STATE_HOME',
-
-    'XCURSOR_THEME',
-    'XCURSOR_SIZE',
-    'HYPRCURSOR_SIZE',
-
-    'MOZ_ENABLE_WAYLAND',
-    'QT_QPA_PLATFORM',
-    'QT_QPA_PLATFORMTHEME',
-    'QT_WAYLAND_DISABLE_WINDOWDECORATION',
-    'ELECTRON_OZONE_PLATFORM_HINT',
-    '_JAVA_AWT_WM_NONREPARENTING',
-]
