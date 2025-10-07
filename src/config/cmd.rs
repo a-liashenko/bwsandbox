@@ -25,8 +25,8 @@ impl Cmd {
         Ok(TemplateArgs { rendered })
     }
 
-    pub fn into_command(self, def_bind: impl AsRef<OsStr>) -> Result<Command, AppError> {
-        let bin = self.bin().unwrap_or(def_bind.as_ref());
+    pub fn into_command(self, def_bin: impl AsRef<OsStr>) -> Result<Command, AppError> {
+        let bin = self.bin().unwrap_or(def_bin.as_ref());
         let mut command = Command::new(bin);
 
         let template_args = self.iter_template()?;
