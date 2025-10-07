@@ -4,11 +4,9 @@ use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitEx
 mod app;
 mod args;
 mod config;
-mod dbus;
-mod env_mapper;
 mod error;
-mod seccomp;
 mod service;
+mod services;
 mod utils;
 
 fn main() -> ExitCode {

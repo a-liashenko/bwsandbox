@@ -12,9 +12,9 @@ pub struct Config {
 }
 
 super::manager::define_services! {
-    dbus => crate::dbus::DbusService,
-    seccomp => crate::seccomp::SeccompService,
-    env_mapper => crate::env_mapper::EnvMapper
+    dbus => crate::services::DbusService,
+    seccomp => crate::services::SeccompService,
+    env_mapper => crate::services::EnvMapper
 }
 
 impl Service for ServiceType {
