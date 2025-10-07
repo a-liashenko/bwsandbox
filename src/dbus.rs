@@ -90,7 +90,7 @@ pub struct Handle {
 
 impl crate::service::Handle for Handle {
     #[tracing::instrument]
-    fn stop(mut self) -> Result<(), AppError> {
+    fn stop(&mut self) -> Result<(), AppError> {
         let _ = self.child.kill();
         Ok(())
     }

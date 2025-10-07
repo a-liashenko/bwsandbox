@@ -4,7 +4,7 @@ use std::{path::PathBuf, process::Command};
 
 pub trait Service: Sized {
     type Config: DeserializeOwned + std::fmt::Debug;
-    type Handle: Handle + 'static;
+    type Handle: Handle;
 
     fn from_config(cfg: Self::Config) -> Result<Self, AppError>;
     fn apply<C: Context>(&mut self, ctx: &mut C) -> Result<Scope, AppError>;
@@ -16,12 +16,18 @@ pub trait Context: std::fmt::Debug {
 }
 
 pub trait Handle: std::fmt::Debug {
-    fn stop(self) -> Result<(), AppError>;
+    fn stop(&mut self) -> Result<(), AppError>;
 }
 
 impl Handle for () {
-    fn stop(self) -> Result<(), AppError> {
+    fn stop(&mut self) -> Result<(), AppError> {
         Ok(())
+    }
+}
+
+impl Handle for Box<dyn Handle> {
+    fn stop(&mut self) -> Result<(), AppError> {
+        self.as_mut().stop()
     }
 }
 

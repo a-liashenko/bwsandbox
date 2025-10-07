@@ -30,13 +30,6 @@ impl Sandbox {
         Ok(())
     }
 
-    pub fn apply_opt<S: Service>(&mut self, service: Option<&mut S>) -> Result<(), AppError> {
-        if let Some(v) = service {
-            return self.apply(v);
-        }
-        Ok(())
-    }
-
     pub fn into_parts(self) -> (Command, Vec<Scope>) {
         (self.command, self.scopes)
     }

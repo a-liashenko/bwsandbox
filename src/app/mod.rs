@@ -1,9 +1,7 @@
 use crate::{
-    app::scope_destroyer::ScopeDestroyer,
-    config::Entry,
+    app::{config::ServiceType, scope_destroyer::ScopeDestroyer},
     error::AppError,
     service::{Handle, Service},
-    utils,
 };
 use std::{
     ffi::{OsStr, OsString},
@@ -11,6 +9,7 @@ use std::{
 };
 
 mod config;
+mod manager;
 mod sandbox;
 mod scope_destroyer;
 
@@ -18,30 +17,27 @@ use config::Config;
 use sandbox::Sandbox;
 
 #[derive(Debug)]
-pub struct App<D, S> {
+pub struct App {
     sandbox: Sandbox,
-    dbus: Option<D>,
-    seccomp: Option<S>,
+    services: Vec<ServiceType>,
 }
 
-impl<D: Service, S: Service> App<D, S> {
+impl App {
     pub fn from_str(content: &str) -> Result<Self, AppError> {
-        let config: Config<D::Config, S::Config> = toml::from_str(content)?;
+        let config: Config = toml::from_str(content)?;
 
-        let sandbox = config.bwrap.into_command(utils::BWRAP_CMD)?;
-        let seccomp = config.seccomp.map(service_load).transpose()?;
-        let dbus = config.dbus.map(service_load).transpose()?;
-
+        let services = config.services.load_services()?;
+        let sandbox = config.bwrap.into_command(crate::utils::BWRAP_CMD)?;
         Ok(Self {
+            services,
             sandbox: Sandbox::new(sandbox),
-            seccomp,
-            dbus,
         })
     }
 
     pub fn apply_services(&mut self) -> Result<(), AppError> {
-        self.sandbox.apply_opt(self.seccomp.as_mut())?;
-        self.sandbox.apply_opt(self.dbus.as_mut())?;
+        for it in &mut self.services {
+            self.sandbox.apply(it)?;
+        }
         Ok(())
     }
 
@@ -50,35 +46,26 @@ impl<D: Service, S: Service> App<D, S> {
         A: AsRef<OsStr>,
         I: Iterator<Item = OsString>,
     {
-        let seccomp = self.seccomp.map(Service::start).transpose()?;
-        let dbus = self.dbus.map(Service::start).transpose()?;
-
         let (mut command, scope) = self.sandbox.into_parts();
         let command = command.arg(app).args(args);
         tracing::info!("bwrap command: {command:?}");
 
-        let scopes = ScopeDestroyer::new(scope)?;
-        let exit_status = command.spawn().map_err(AppError::spawn("bwrap"))?.wait();
-        drop(scopes);
+        let _scopes = ScopeDestroyer::new(scope)?;
 
-        seccomp.map(S::Handle::stop);
-        dbus.map(D::Handle::stop);
+        let mut handles = services_start(self.services.into_iter())?;
+        let exit_status = command.spawn().map_err(AppError::spawn("bwrap"))?.wait();
+        if let Err(e) = handles.iter_mut().try_for_each(Handle::stop) {
+            tracing::error!("Failed to stop service with {e:?}");
+        }
 
         exit_status.map_err(AppError::spawn("bwrap"))
     }
 }
 
-#[tracing::instrument]
-fn service_load<S: Service>(config: Entry<S::Config>) -> Result<S, AppError> {
-    let config = match config {
-        Entry::Inline(v) => v,
-        Entry::Include { include } => {
-            let path = include.as_inner();
-            let content = std::fs::read_to_string(path).map_err(AppError::file(path))?;
-            toml::from_str(&content)?
-        }
-    };
-
-    let service = S::from_config(config)?;
-    Ok(service)
+fn services_start<S, I>(iter: I) -> Result<Vec<S::Handle>, AppError>
+where
+    S: Service,
+    I: Iterator<Item = S>,
+{
+    iter.map(Service::start).collect::<Result<Vec<_>, _>>()
 }

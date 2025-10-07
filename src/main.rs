@@ -1,12 +1,11 @@
 use std::process::ExitCode;
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 
-type App = app::App<dbus::DbusService, seccomp::SeccompService>;
-
 mod app;
 mod args;
 mod config;
 mod dbus;
+mod env_mapper;
 mod error;
 mod seccomp;
 mod service;
@@ -43,7 +42,7 @@ fn main() -> ExitCode {
 }
 
 fn run(args: args::Args) -> Result<(), error::AppError> {
-    let mut app = App::from_str(&args.config)?;
+    let mut app = app::App::from_str(&args.config)?;
     app.apply_services()?;
 
     // Should work for appimage v2

@@ -14,6 +14,9 @@
 # Comment [dbus] section to disabled dbus proxy
 # cargo run -- -f ./example/simple.toml -- dbus-send --type=method_call --print-reply --dest=org.freedesktop.DBus / org.freedesktop.DBus.ListNames
 
+# Example env filter
+# cargo run -- -f ./example/simple.toml -- env
+
 # Required
 [bwrap]
 # Optional, default bwrap
@@ -75,3 +78,17 @@ inline = [
     { type = "str", value = "--filter" },
     { type = "str", value = "--talk=org.freedesktop.DBus" },
 ]
+
+# Optional, uncomment
+[env_mapper]
+type = 'inline'
+
+# Optinal, default true
+# unset_all = true
+
+# Optional, default empty
+keep = ["USER", "HOME"]
+
+# Optional, default empty
+# Applied AFTER keep envs, will remove any variable set in keep section
+unset = ["USER"]

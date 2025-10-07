@@ -64,17 +64,18 @@ impl Service for SeccompService {
 
     #[tracing::instrument]
     fn start(self) -> Result<Self::Handle, AppError> {
-        Ok(Handle(self.fd))
+        Ok(Handle { _fd: self.fd })
     }
 }
 
 #[derive(Debug)]
-pub struct Handle(File);
+pub struct Handle {
+    _fd: File,
+}
 
 impl crate::service::Handle for Handle {
-    fn stop(self) -> Result<(), AppError> {
+    fn stop(&mut self) -> Result<(), AppError> {
         // Do nothing, tempfile will be closed by OS
-        let _f = self.0;
         Ok(())
     }
 }
