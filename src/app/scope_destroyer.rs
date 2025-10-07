@@ -15,7 +15,7 @@ impl ScopeDestroyer {
         let scopes_lnk = scopes.clone();
         let sig_handle = move || {
             tracing::info!("----- Called Ctrl + C");
-            if let Some(scopes) = take_scopes(scopes_lnk.clone()) {
+            if let Some(scopes) = take_scopes(&scopes_lnk) {
                 destroy(scopes.into_iter());
             }
         };
@@ -27,14 +27,14 @@ impl ScopeDestroyer {
 
 impl Drop for ScopeDestroyer {
     fn drop(&mut self) {
-        if let Some(scopes) = take_scopes(self.scopes.clone()) {
+        if let Some(scopes) = take_scopes(&self.scopes) {
             destroy(scopes.into_iter());
         }
     }
 }
 
 #[tracing::instrument]
-fn take_scopes(scopes: ScVec) -> Option<Vec<Scope>> {
+fn take_scopes(scopes: &ScVec) -> Option<Vec<Scope>> {
     let scopes = scopes.lock().map(|mut v| v.take());
     match scopes {
         Ok(Some(v)) => return Some(v),

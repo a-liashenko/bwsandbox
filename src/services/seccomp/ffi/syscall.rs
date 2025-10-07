@@ -10,7 +10,7 @@ impl Syscall {
         Self(raw)
     }
 
-    pub fn raw(&self) -> i32 {
+    pub fn raw(self) -> i32 {
         self.0
     }
 

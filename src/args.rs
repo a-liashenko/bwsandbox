@@ -7,6 +7,7 @@ const CONFIG_DIR: &str = "XDG_CONFIG_HOME";
 #[derive(Debug)]
 pub struct Args {
     pub app: OsString,
+    #[allow(clippy::struct_field_names)]
     pub app_args: Vec<OsString>,
     pub is_app_image: bool,
     pub config: String,

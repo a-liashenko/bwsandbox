@@ -21,7 +21,7 @@ impl Cmd {
     }
 
     pub fn iter_template(&self) -> Result<TemplateArgs, AppError> {
-        let rendered = self.template.as_ref().map(|v| v.render()).transpose()?;
+        let rendered = self.template.as_ref().map(Template::render).transpose()?;
         Ok(TemplateArgs { rendered })
     }
 
@@ -64,10 +64,10 @@ impl<'a> TemplateArgsIter<'a> {
     }
 }
 
-impl<'a> std::iter::Iterator for TemplateArgsIter<'a> {
+impl std::iter::Iterator for TemplateArgsIter<'_> {
     type Item = String;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.shlex.as_mut().and_then(|v| v.next())
+        self.shlex.as_mut().and_then(std::iter::Iterator::next)
     }
 }

@@ -22,7 +22,7 @@ impl<T: DeserializeOwned> Entry<T> {
         };
 
         let content = std::fs::read_to_string(&path).map_err(AppError::file(&path))?;
-        let item = loader(&content).map_err(|e| e.into())?;
+        let item = loader(&content).map_err(Into::into)?;
         Ok(item)
     }
 }

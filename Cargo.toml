@@ -3,6 +3,10 @@ name = "bwsandbox"
 version = "0.1.0"
 edition = "2024"
 
+[lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+unreadable_literal = "allow"
+
 [dependencies]
 anyhow = { version = "1.0", default-features = false, features = ["std"] }
 minijinja = { version = "2.12", default-features = false, features = ["multi_template", "serde", "loader"] }

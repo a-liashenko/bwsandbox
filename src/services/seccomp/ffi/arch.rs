@@ -10,7 +10,7 @@ impl Arch {
         Self(raw)
     }
 
-    pub fn raw(&self) -> u32 {
+    pub fn raw(self) -> u32 {
         self.0
     }
 

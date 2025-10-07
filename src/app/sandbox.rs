@@ -20,7 +20,7 @@ impl Sandbox {
     pub fn new(command: Command) -> Self {
         Self {
             command,
-            scopes: Default::default(),
+            scopes: Vec::default(),
         }
     }
 
