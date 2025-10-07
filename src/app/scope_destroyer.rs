@@ -5,7 +5,7 @@ type ScVec = Arc<Mutex<Option<Vec<Scope>>>>;
 
 #[derive(Debug)]
 pub struct ScopeDestroyer {
-    scopes: Arc<Mutex<Option<Vec<Scope>>>>,
+    scopes: ScVec,
 }
 
 impl ScopeDestroyer {
