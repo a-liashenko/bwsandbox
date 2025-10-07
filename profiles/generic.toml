@@ -24,12 +24,16 @@ WAYLAND_DISPLAY = { type = "env", value = "$WAYLAND_DISPLAY" }
 [env_mapper]
 type = 'inline'
 keep = [
+    'APPIMAGE_EXTRACT_AND_RUN',
+
+    'USER',
+    'HOME',
+    'PATH',
+
     'LANG',
     'LANGUAGE',
     'TERM',
     'COLORTERM',
-
-    'APPIMAGE_EXTRACT_AND_RUN',
 
     'WAYLAND_DISPLAY',
     'DISPLAY',
