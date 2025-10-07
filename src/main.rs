@@ -26,7 +26,7 @@ fn main() -> ExitCode {
     let args = match args::Args::from_iter(std::env::args_os()) {
         Ok(v) => v,
         Err(e) => {
-            print_error(e);
+            print_error(&e);
             return print_help();
         }
     };
@@ -38,7 +38,7 @@ fn main() -> ExitCode {
     }
 
     if let Err(e) = run(args) {
-        print_error(e);
+        print_error(&e);
         return ExitCode::FAILURE;
     }
 
@@ -53,7 +53,7 @@ fn run(args: args::Args) -> Result<(), error::AppError> {
     std::process::exit(status.code().unwrap_or(-1));
 }
 
-fn print_error(e: error::AppError) {
+fn print_error(e: &error::AppError) {
     tracing::info!("{e:#?}");
     tracing::error!("{}", e.to_string());
 }
