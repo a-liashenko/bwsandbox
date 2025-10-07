@@ -37,3 +37,7 @@ pub fn poll_file(path: &Path, poll: Duration, total: Duration) -> Result<bool, A
 
     Ok(false)
 }
+
+pub fn deserialize<T: serde::de::DeserializeOwned>(s: &str) -> Result<T, toml::de::Error> {
+    toml::from_str(s)
+}

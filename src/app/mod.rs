@@ -24,7 +24,7 @@ pub struct App {
 
 impl App {
     pub fn from_str(content: &str) -> Result<Self, AppError> {
-        let config: Config = toml::from_str(content)?;
+        let config: Config = crate::utils::deserialize(content)?;
 
         let services = config.services.load_services()?;
         let sandbox = config.bwrap.into_command(crate::utils::BWRAP_CMD)?;

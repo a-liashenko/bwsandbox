@@ -4,7 +4,7 @@ pub fn load_service<S>(config: Entry<S::Config>) -> Result<S, AppError>
 where
     S: Service,
 {
-    let config = config.load(|v| toml::from_str(v))?;
+    let config = config.load(crate::utils::deserialize)?;
     let service = S::from_config(config)?;
     Ok(service)
 }
