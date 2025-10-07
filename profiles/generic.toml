@@ -26,6 +26,8 @@ type = 'inline'
 keep = [
     'LANG',
     'LANGUAGE',
+    'TERM',
+    'COLORTERM',
 
     'APPIMAGE_EXTRACT_AND_RUN',
 
