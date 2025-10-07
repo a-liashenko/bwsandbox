@@ -22,7 +22,7 @@ impl Service for ServiceType {
     type Handle = Box<dyn Handle>;
 
     fn from_config(_cfg: Self::Config) -> Result<Self, AppError> {
-        unimplemented!();
+        unreachable!();
     }
 
     fn apply<C: Context>(&mut self, ctx: &mut C) -> Result<Scope, AppError> {
