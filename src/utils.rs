@@ -1,6 +1,6 @@
 use std::{
     path::{Path, PathBuf},
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 use crate::error::AppError;
@@ -25,14 +25,13 @@ pub fn temp_dir() -> PathBuf {
 }
 
 pub fn poll_file(path: &Path, poll: Duration, total: Duration) -> Result<bool, AppError> {
-    let mut slept = Duration::from_secs(0);
-    while slept < total {
+    let start = Instant::now();
+    while start.elapsed() < total {
         if std::fs::exists(path).map_err(AppError::file(path))? {
             return Ok(true);
         }
 
         std::thread::sleep(poll);
-        slept += poll;
     }
 
     Ok(false)
