@@ -20,7 +20,7 @@ tracing-subscriber = { version = "0.3", default-features = false, features = ["a
 ctrlc = { version = "3.5.0", default-features = false, features = ["termination"] }
 
 [dev-dependencies]
-toml = { version = "*", default-features = false, features = ["display"] }
+toml = { version = "*", default-features = false, features = ["std", "serde", "parse", "display"] }
 
 [profile.release]
 lto = "fat"
