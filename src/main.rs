@@ -46,7 +46,7 @@ fn main() -> ExitCode {
 }
 
 fn run(args: args::Args) -> Result<(), error::AppError> {
-    let mut app = app::App::from_str(&args.config)?;
+    let mut app = app::App::try_parse(&args.config)?;
     app.apply_services()?;
 
     let status = app.run(args.app, args.app_args.into_iter())?;

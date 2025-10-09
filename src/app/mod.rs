@@ -24,7 +24,7 @@ pub struct App {
 }
 
 impl App {
-    pub fn from_str(content: &str) -> Result<Self, AppError> {
+    pub fn try_parse(content: &str) -> Result<Self, AppError> {
         let config: Config = utils::deserialize(content)?;
 
         let sandbox = {
