@@ -44,9 +44,8 @@ mod tests {
 
     #[test]
     fn test_basic_type() {
-        let eval = crate::utils::rand_id(10);
-        let ekey = crate::utils::rand_id(10);
-        unsafe { std::env::set_var(ekey.clone(), eval.clone()) };
+        let eval = std::env::var("USER").unwrap();
+        let ekey = "USER";
 
         let src = format!("Hello {eval}!");
         let value: EnvVal<String> = EnvVal::resolve(format!("Hello ${ekey}!")).unwrap();
