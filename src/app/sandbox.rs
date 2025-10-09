@@ -1,36 +1,57 @@
 use crate::{
+    app::scope_destroyer::ScopeDestroyer,
     error::AppError,
     service::{Context, Scope, Service},
 };
-use std::process::Command;
+use std::{ffi::OsString, process::Command};
 
 #[derive(Debug)]
 pub struct Sandbox {
-    command: Command,
-    scopes: Vec<Scope>,
+    bin: Command,
+    command_args: Vec<OsString>,
+    scope: Scope,
 }
 
 impl Context for Sandbox {
     fn sandbox_mut(&mut self) -> &mut Command {
-        &mut self.command
+        &mut self.bin
     }
 }
 
 impl Sandbox {
-    pub fn new(command: Command) -> Self {
+    pub fn new(bin: impl Into<OsString>, command_args: Vec<OsString>) -> Self {
+        let bin = Command::new(bin.into());
         Self {
-            command,
-            scopes: Vec::default(),
+            bin,
+            command_args,
+            scope: Scope::new(),
         }
     }
 
-    pub fn apply<S: Service>(&mut self, service: &mut S) -> Result<(), AppError> {
-        let scope = service.apply(self)?;
-        self.scopes.push(scope);
+    pub fn apply_before<S: Service>(&mut self, service: &mut S) -> Result<(), AppError> {
+        let scope = service.apply_before(self)?;
+        self.scope.merge(scope);
         Ok(())
     }
 
-    pub fn into_parts(self) -> (Command, Vec<Scope>) {
-        (self.command, self.scopes)
+    pub fn prebuild(&mut self) {
+        let args = std::mem::take(&mut self.command_args);
+        self.bin.args(args);
+    }
+
+    pub fn apply_after<S: Service>(&mut self, service: &mut S) -> Result<(), AppError> {
+        assert!(
+            self.command_args.is_empty(),
+            "prebuild() must be called before apply_after()"
+        );
+
+        let scope = service.apply_after(self)?;
+        self.scope.merge(scope);
+        Ok(())
+    }
+
+    pub fn build(self) -> Result<(Command, ScopeDestroyer), AppError> {
+        let scope_destroyer = ScopeDestroyer::new(vec![self.scope])?;
+        Ok((self.bin, scope_destroyer))
     }
 }

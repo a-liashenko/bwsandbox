@@ -1,13 +1,15 @@
 use crate::error::AppError;
 use serde::de::DeserializeOwned;
-use std::{path::PathBuf, process::Command};
+use std::{collections::BTreeSet, path::PathBuf, process::Command};
 
 pub trait Service: Sized {
     type Config: DeserializeOwned + std::fmt::Debug;
     type Handle: Handle;
 
     fn from_config(cfg: Self::Config) -> Result<Self, AppError>;
-    fn apply<C: Context>(&mut self, ctx: &mut C) -> Result<Scope, AppError>;
+
+    fn apply_before<C: Context>(&mut self, ctx: &mut C) -> Result<Scope, AppError>;
+    fn apply_after<C: Context>(&mut self, ctx: &mut C) -> Result<Scope, AppError>;
     fn start(self) -> Result<Self::Handle, AppError>;
 }
 
@@ -33,7 +35,7 @@ impl Handle for Box<dyn Handle> {
 
 #[derive(Debug, Default)]
 pub struct Scope {
-    pub remove: Vec<PathBuf>,
+    pub remove: BTreeSet<PathBuf>,
 }
 
 impl Scope {
@@ -42,7 +44,11 @@ impl Scope {
     }
 
     pub fn remove_file(mut self, file: impl Into<PathBuf>) -> Self {
-        self.remove.push(file.into());
+        self.remove.insert(file.into());
         self
+    }
+
+    pub fn merge(&mut self, other: Scope) {
+        self.remove.extend(other.remove);
     }
 }

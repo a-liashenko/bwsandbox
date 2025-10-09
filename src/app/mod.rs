@@ -1,7 +1,8 @@
 use crate::{
-    app::{config::ServiceType, scope_destroyer::ScopeDestroyer},
+    app::config::ServiceType,
     error::AppError,
     service::{Handle, Service},
+    utils,
 };
 use std::{
     ffi::{OsStr, OsString},
@@ -24,20 +25,29 @@ pub struct App {
 
 impl App {
     pub fn from_str(content: &str) -> Result<Self, AppError> {
-        let config: Config = crate::utils::deserialize(content)?;
+        let config: Config = utils::deserialize(content)?;
 
+        let sandbox = {
+            let bin = config.bwrap.bin().unwrap_or(utils::BWRAP_CMD.as_ref());
+            let args = config.bwrap.collect_args()?;
+            Sandbox::new(bin, args)
+        };
         let services = config.services.load_services()?;
-        let sandbox = config.bwrap.into_command(crate::utils::BWRAP_CMD)?;
-        Ok(Self {
-            services,
-            sandbox: Sandbox::new(sandbox),
-        })
+
+        Ok(Self { sandbox, services })
     }
 
     pub fn apply_services(&mut self) -> Result<(), AppError> {
         for it in &mut self.services {
-            self.sandbox.apply(it)?;
+            self.sandbox.apply_before(it)?;
         }
+
+        self.sandbox.prebuild();
+
+        for it in &mut self.services {
+            self.sandbox.apply_after(it)?;
+        }
+
         Ok(())
     }
 
@@ -46,11 +56,9 @@ impl App {
         A: AsRef<OsStr>,
         I: Iterator<Item = OsString>,
     {
-        let (mut command, scope) = self.sandbox.into_parts();
+        let (mut command, _scopes) = self.sandbox.build()?;
         let command = command.arg(app).args(args);
         tracing::info!("bwrap command: {command:?}");
-
-        let _scopes = ScopeDestroyer::new(scope)?;
 
         let mut handles = services_start(self.services.into_iter())?;
         let exit_status = command.spawn().map_err(AppError::spawn("bwrap"))?.wait();

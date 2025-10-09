@@ -25,8 +25,12 @@ impl Service for ServiceType {
         unreachable!();
     }
 
-    fn apply<C: Context>(&mut self, ctx: &mut C) -> Result<Scope, AppError> {
-        self.apply(ctx)
+    fn apply_before<C: Context>(&mut self, ctx: &mut C) -> Result<Scope, AppError> {
+        self.apply_before(ctx)
+    }
+
+    fn apply_after<C: Context>(&mut self, ctx: &mut C) -> Result<Scope, AppError> {
+        self.apply_after(ctx)
     }
 
     fn start(self) -> Result<Self::Handle, AppError> {

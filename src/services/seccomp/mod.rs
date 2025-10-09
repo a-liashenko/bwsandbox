@@ -54,8 +54,12 @@ impl Service for SeccompService {
         Ok(Self { fd })
     }
 
+    fn apply_before<C: Context>(&mut self, _ctx: &mut C) -> Result<Scope, AppError> {
+        Ok(Scope::new())
+    }
+
     #[tracing::instrument]
-    fn apply<C: Context>(&mut self, ctx: &mut C) -> Result<Scope, AppError> {
+    fn apply_after<C: Context>(&mut self, ctx: &mut C) -> Result<Scope, AppError> {
         ctx.sandbox_mut()
             .arg("--seccomp")
             .arg(self.fd.as_raw_fd().to_string());

@@ -26,7 +26,7 @@ impl Service for EnvMapper {
         Ok(config)
     }
 
-    fn apply<C: Context>(&mut self, ctx: &mut C) -> Result<Scope, AppError> {
+    fn apply_before<C: Context>(&mut self, ctx: &mut C) -> Result<Scope, AppError> {
         if self.unset_all {
             ctx.sandbox_mut().arg("--clearenv");
         }
@@ -41,6 +41,10 @@ impl Service for EnvMapper {
             ctx.sandbox_mut().arg("--unsetenv").arg(it);
         }
 
+        Ok(Scope::new())
+    }
+
+    fn apply_after<C: Context>(&mut self, _ctx: &mut C) -> Result<Scope, AppError> {
         Ok(Scope::new())
     }
 

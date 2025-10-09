@@ -14,7 +14,7 @@
 # Comment [dbus] section to disabled dbus proxy
 # cargo run -- -f ./example/simple.toml -- dbus-send --type=method_call --print-reply --dest=org.freedesktop.DBus / org.freedesktop.DBus.ListNames
 
-# Example env filter
+# Example env filter, SANDBOX_HELLO var will be present in sandbox because env_mapper executed BEFORE bwrap args
 # cargo run -- -f ./example/simple.toml -- env
 
 # Required
@@ -80,6 +80,7 @@ inline = [
 ]
 
 # Optional, uncomment
+# Manipulates env variables BEFORE bwrap arguments
 [env_mapper]
 type = 'inline'
 

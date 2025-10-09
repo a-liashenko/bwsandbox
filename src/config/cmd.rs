@@ -2,7 +2,6 @@ use crate::config::{ArgVal, Template, values::EnvVal};
 use crate::error::AppError;
 use serde::Deserialize;
 use std::ffi::{OsStr, OsString};
-use std::process::Command;
 
 #[derive(Debug, Deserialize)]
 pub struct Cmd {
@@ -25,13 +24,15 @@ impl Cmd {
         Ok(TemplateArgs { rendered })
     }
 
-    pub fn into_command(self, def_bin: impl AsRef<OsStr>) -> Result<Command, AppError> {
-        let bin = self.bin().unwrap_or(def_bin.as_ref());
-        let mut command = Command::new(bin);
+    pub fn collect_args(&self) -> Result<Vec<OsString>, AppError> {
+        let inline = self.iter_inline();
+        let template = self.iter_template()?;
 
-        let template_args = self.iter_template()?;
-        command.args(self.iter_inline()).args(template_args.iter());
-        Ok(command)
+        let size = inline.size_hint().0 + template.iter().size_hint().0;
+        let mut items = Vec::with_capacity(size);
+        items.extend(inline.map(Into::into));
+        items.extend(template.iter().map(Into::into));
+        Ok(items)
     }
 }
 

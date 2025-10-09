@@ -44,10 +44,19 @@ macro_rules! define_services {
         }
 
         impl ServiceType {
-            pub fn apply<C: Context>(&mut self, ctx: &mut C) -> Result<Scope, AppError> {
+            pub fn apply_before<C: Context>(&mut self, ctx: &mut C) -> Result<Scope, AppError> {
                 let scope = match self {
                     $(
-                        Self::$name(v) => v.apply(ctx)?,
+                        Self::$name(v) => v.apply_before(ctx)?,
+                    )+
+                };
+                Ok(scope)
+            }
+
+            pub fn apply_after<C: Context>(&mut self, ctx: &mut C) -> Result<Scope, AppError> {
+                let scope = match self {
+                    $(
+                        Self::$name(v) => v.apply_after(ctx)?,
                     )+
                 };
                 Ok(scope)
