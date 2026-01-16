@@ -10,12 +10,15 @@ use std::{
 };
 
 mod config;
+mod internal;
 mod manager;
 mod sandbox;
 mod scope_destroyer;
 
 use config::Config;
 use sandbox::SandboxBuilder;
+
+pub use internal::InternalApp;
 
 #[derive(Debug)]
 pub struct App {
@@ -68,7 +71,7 @@ impl App {
             tracing::error!("Failed to stop service with {e:?}");
         }
 
-        exit_status.map_err(AppError::spawn("bwrap"))
+        exit_status.map_err(AppError::spawn(utils::SELF_CMD))
     }
 }
 
