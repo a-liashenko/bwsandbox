@@ -15,11 +15,11 @@ mod sandbox;
 mod scope_destroyer;
 
 use config::Config;
-use sandbox::Sandbox;
+use sandbox::SandboxBuilder;
 
 #[derive(Debug)]
 pub struct App {
-    sandbox: Sandbox,
+    sandbox: SandboxBuilder,
     services: Vec<ServiceType>,
 }
 
@@ -27,10 +27,9 @@ impl App {
     pub fn try_parse(content: &str) -> Result<Self, AppError> {
         let config: Config = utils::deserialize(content)?;
 
-        let sandbox = {
-            let args = config.bwrap.collect_args()?;
-            Sandbox::new(utils::BWRAP_CMD, args)
-        };
+        let args = config.bwrap.collect_args()?;
+        let sandbox = SandboxBuilder::new(utils::SELF_CMD, args)?;
+
         let services = config.services.load_services()?;
 
         Ok(Self { sandbox, services })
@@ -55,15 +54,16 @@ impl App {
         A: AsRef<OsStr>,
         I: Iterator<Item = OsString>,
     {
-        let (mut command, _scopes) = self.sandbox.build()?;
-        let command = command.arg(app).args(args);
-        tracing::info!("bwrap command: {command:?}");
+        let mut sandbox = self.sandbox.build(app, args)?;
+        tracing::info!("internal command: {:?}", sandbox.get_command());
 
-        let mut handles = services_start(self.services.into_iter())?;
-        let exit_status = command
-            .spawn()
-            .map_err(AppError::spawn(utils::BWRAP_CMD))?
-            .wait();
+        let mut internal = sandbox.start()?;
+
+        // Start all background services. Service::start should block until its ready
+        let mut handles = services_start(self.services.into_iter(), internal.id())?;
+        sandbox.notify_ready()?;
+
+        let exit_status = internal.wait();
         if let Err(e) = handles.iter_mut().try_for_each(Handle::stop) {
             tracing::error!("Failed to stop service with {e:?}");
         }
@@ -72,10 +72,10 @@ impl App {
     }
 }
 
-fn services_start<S, I>(iter: I) -> Result<Vec<S::Handle>, AppError>
+fn services_start<S, I>(iter: I, pid: u32) -> Result<Vec<S::Handle>, AppError>
 where
     S: Service,
     I: Iterator<Item = S>,
 {
-    iter.map(Service::start).collect::<Result<Vec<_>, _>>()
+    iter.map(|v| v.start(pid)).collect::<Result<Vec<_>, _>>()
 }

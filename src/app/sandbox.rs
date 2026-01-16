@@ -1,31 +1,47 @@
 use crate::{
     app::scope_destroyer::ScopeDestroyer,
     error::AppError,
+    fd::FileExtraFd,
     service::{Context, Scope, Service},
+    utils,
 };
-use std::{ffi::OsString, process::Command};
+use std::{
+    ffi::{OsStr, OsString},
+    fs::File,
+    io::Write,
+    os::fd::AsRawFd,
+    process::{Child, Command},
+};
 
 #[derive(Debug)]
-pub struct Sandbox {
+pub struct SandboxBuilder {
     bin: Command,
     command_args: Vec<OsString>,
     scope: Scope,
+    ready_fd: File,
 }
 
-impl Context for Sandbox {
-    fn sandbox_mut(&mut self) -> &mut Command {
+impl Context for SandboxBuilder {
+    fn command_mut(&mut self) -> &mut Command {
         &mut self.bin
     }
 }
 
-impl Sandbox {
-    pub fn new(bin: impl Into<OsString>, command_args: Vec<OsString>) -> Self {
-        let bin = Command::new(bin.into());
-        Self {
+impl SandboxBuilder {
+    pub fn new(bin: impl Into<OsString>, command_args: Vec<OsString>) -> Result<Self, AppError> {
+        let ready_fd = tempfile::tempfile().map_err(AppError::FileTempAlloc)?;
+        ready_fd.share_with_children()?;
+
+        let mut bin = Command::new(bin.into());
+        bin.arg(utils::SELF_INTERNAL_ARG);
+        bin.arg(ready_fd.as_raw_fd().to_string());
+
+        Ok(Self {
             bin,
             command_args,
+            ready_fd,
             scope: Scope::new(),
-        }
+        })
     }
 
     pub fn apply_before<S: Service>(&mut self, service: &mut S) -> Result<(), AppError> {
@@ -50,8 +66,50 @@ impl Sandbox {
         Ok(())
     }
 
-    pub fn build(self) -> Result<(Command, ScopeDestroyer), AppError> {
-        let scope_destroyer = ScopeDestroyer::new(vec![self.scope])?;
-        Ok((self.bin, scope_destroyer))
+    pub fn build<A, I>(mut self, app: A, args: I) -> Result<Sandbox, AppError>
+    where
+        A: AsRef<OsStr>,
+        I: Iterator<Item = OsString>,
+    {
+        let cleanup = ScopeDestroyer::new(vec![self.scope])?;
+
+        self.bin.arg(app).args(args);
+        Ok(Sandbox::new(self.bin, self.ready_fd, cleanup))
+    }
+}
+
+#[derive(Debug)]
+pub struct Sandbox {
+    cmd: Option<Command>,
+    ready_fd: File,
+
+    // Will clean everything on drop
+    _cleanup: ScopeDestroyer,
+}
+
+impl Sandbox {
+    fn new(cmd: Command, ready_fd: File, cleanup: ScopeDestroyer) -> Self {
+        Self {
+            cmd: Some(cmd),
+            ready_fd: ready_fd,
+            _cleanup: cleanup,
+        }
+    }
+
+    pub fn get_command(&self) -> Option<&Command> {
+        self.cmd.as_ref()
+    }
+
+    pub fn start(&mut self) -> Result<Child, AppError> {
+        let mut cmd = self.cmd.take().expect("Sandbox can be started only once");
+        let child = cmd.spawn().map_err(AppError::spawn(utils::SELF_CMD))?;
+        Ok(child)
+    }
+
+    pub fn notify_ready(&mut self) -> Result<(), AppError> {
+        self.ready_fd
+            .write(&[1])
+            .map_err(AppError::file("__ready_fd__"))?;
+        Ok(())
     }
 }
