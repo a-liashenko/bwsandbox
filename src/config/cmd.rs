@@ -1,20 +1,15 @@
-use crate::config::{ArgVal, Template, values::EnvVal};
+use crate::config::{ArgVal, Template};
 use crate::error::AppError;
 use serde::Deserialize;
-use std::ffi::{OsStr, OsString};
+use std::ffi::OsString;
 
 #[derive(Debug, Deserialize)]
 pub struct Cmd {
-    bin: Option<EnvVal<OsString>>,
     template: Option<Template>,
     inline: Option<Vec<ArgVal>>,
 }
 
 impl Cmd {
-    pub fn bin(&self) -> Option<&OsStr> {
-        self.bin.as_ref().map(|v| v.as_inner().as_os_str())
-    }
-
     pub fn iter_inline(&self) -> impl Iterator<Item = &ArgVal> {
         self.inline.iter().flat_map(|v| v.iter())
     }

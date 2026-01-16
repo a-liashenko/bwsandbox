@@ -33,11 +33,10 @@ impl Service for DbusService {
 
     #[tracing::instrument]
     fn from_config(cfg: Self::Config) -> Result<Self, AppError> {
-        let bin = cfg.cmd.bin().unwrap_or(utils::DBUS_CMD.as_ref());
         let inline_args = cfg.cmd.iter_inline();
         let template_args = cfg.cmd.iter_template()?;
 
-        let mut command = Command::new(bin);
+        let mut command = Command::new(utils::DBUS_CMD);
         command
             .arg(cfg.user_bus.as_inner())
             .arg(cfg.proxy_bus.as_inner())

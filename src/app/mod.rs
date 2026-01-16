@@ -28,9 +28,8 @@ impl App {
         let config: Config = utils::deserialize(content)?;
 
         let sandbox = {
-            let bin = config.bwrap.bin().unwrap_or(utils::BWRAP_CMD.as_ref());
             let args = config.bwrap.collect_args()?;
-            Sandbox::new(bin, args)
+            Sandbox::new(utils::BWRAP_CMD, args)
         };
         let services = config.services.load_services()?;
 
