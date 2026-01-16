@@ -1,4 +1,5 @@
 use crate::error::AppError;
+use crate::fd::FileExtraFd;
 use crate::service::{Context, Scope, Service};
 use anyhow::Context as _;
 use std::io::Seek;
@@ -40,15 +41,14 @@ impl Service for SeccompService {
         }
 
         // Use in-memory(?) temp file, it will be cleaned by OS
+        // Temp file preffered instead of pipe because pipe has limited buffer and may block on large seccomp filters
         let mut fd = tempfile::tempfile().map_err(AppError::FileTempAlloc)?;
         filter
             .export_bpf(&mut fd)
             .context("Failed to export compilled seccomp filter")
             .map_err(AppError::SeccompLib)?;
 
-        // Share fd with spawned childs
-        rustix::io::fcntl_setfd(&fd, rustix::io::FdFlags::empty())
-            .map_err(|e| AppError::FileFdShare(fd.as_raw_fd(), e))?;
+        fd.share_with_children()?;
         fd.rewind().map_err(AppError::file("__in-memory__"))?;
 
         Ok(Self { fd })
@@ -60,14 +60,14 @@ impl Service for SeccompService {
 
     #[tracing::instrument]
     fn apply_after<C: Context>(&mut self, ctx: &mut C) -> Result<Scope, AppError> {
-        ctx.sandbox_mut()
+        ctx.command_mut()
             .arg("--seccomp")
             .arg(self.fd.as_raw_fd().to_string());
         Ok(Scope::new())
     }
 
     #[tracing::instrument]
-    fn start(self) -> Result<Self::Handle, AppError> {
+    fn start(self, _pid: u32) -> Result<Self::Handle, AppError> {
         Ok(Handle { _fd: self.fd })
     }
 }

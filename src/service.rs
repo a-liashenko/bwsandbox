@@ -10,11 +10,11 @@ pub trait Service: Sized {
 
     fn apply_before<C: Context>(&mut self, ctx: &mut C) -> Result<Scope, AppError>;
     fn apply_after<C: Context>(&mut self, ctx: &mut C) -> Result<Scope, AppError>;
-    fn start(self) -> Result<Self::Handle, AppError>;
+    fn start(self, pid: u32) -> Result<Self::Handle, AppError>;
 }
 
 pub trait Context: std::fmt::Debug {
-    fn sandbox_mut(&mut self) -> &mut Command;
+    fn command_mut(&mut self) -> &mut Command;
 }
 
 pub trait Handle: std::fmt::Debug {
