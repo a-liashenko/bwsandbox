@@ -9,6 +9,9 @@ pub const APP_NAME: &str = env!("CARGO_CRATE_NAME");
 pub const BWRAP_CMD: &str = "bwrap";
 pub const DBUS_CMD: &str = "xdg-dbus-proxy";
 
+pub const SELF_CMD: &str = "proc/self/exe";
+pub const SELF_INTERNAL_ARG: &str = "--internal-wait-ready";
+
 pub fn sandbox_id() -> &'static str {
     static PREFIX: std::sync::OnceLock<String> = std::sync::OnceLock::new();
     PREFIX.get_or_init(|| rand_id(16))
