@@ -5,6 +5,7 @@ mod app;
 mod args;
 mod config;
 mod error;
+mod fd;
 mod service;
 mod services;
 mod utils;
