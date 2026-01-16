@@ -27,6 +27,13 @@ pub enum AppError {
     SeccompLib(anyhow::Error),
     #[error("Failed to register ctrl+c handle")]
     CtrlC(#[from] ctrlc::Error),
+    #[error("Failed to allocate new pipe: {0:?}")]
+    PipeAlloc(rustix::io::Errno),
+    #[error("Failed to read ready status from parent fd: {0}")]
+    PipeRead(std::io::Error),
+    #[error("Unexpected ready code from parent: {0}")]
+    PipeUnexpectedStatus(u8),
+    //
     // #[error(transparent)]
     // Other(#[from] anyhow::Error),
 }
