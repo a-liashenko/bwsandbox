@@ -41,6 +41,7 @@ impl Service for SeccompService {
         }
 
         // Use in-memory(?) temp file, it will be cleaned by OS
+        // Temp file preffered instead of pipe because pipe has limited buffer and may block on large seccomp filters
         let mut fd = tempfile::tempfile().map_err(AppError::FileTempAlloc)?;
         filter
             .export_bpf(&mut fd)
