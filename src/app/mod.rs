@@ -60,7 +60,10 @@ impl App {
         tracing::info!("bwrap command: {command:?}");
 
         let mut handles = services_start(self.services.into_iter())?;
-        let exit_status = command.spawn().map_err(AppError::spawn("bwrap"))?.wait();
+        let exit_status = command
+            .spawn()
+            .map_err(AppError::spawn(utils::BWRAP_CMD))?
+            .wait();
         if let Err(e) = handles.iter_mut().try_for_each(Handle::stop) {
             tracing::error!("Failed to stop service with {e:?}");
         }
