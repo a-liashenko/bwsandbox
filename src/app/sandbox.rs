@@ -1,7 +1,7 @@
 use crate::{
     app::scope_destroyer::ScopeDestroyer,
     error::AppError,
-    fd::FileExtraFd,
+    fd::AsFdExtra,
     service::{Context, Scope, Service},
     utils,
 };

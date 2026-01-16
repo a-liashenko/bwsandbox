@@ -1,5 +1,5 @@
 use crate::error::AppError;
-use crate::fd::FileExtraFd;
+use crate::fd::AsFdExtra;
 use crate::service::{Context, Scope, Service};
 use anyhow::Context as _;
 use std::io::Seek;
