@@ -9,7 +9,7 @@ use std::{
     ffi::{OsStr, OsString},
     fs::File,
     io::Write,
-    os::fd::AsRawFd,
+    os::fd::{FromRawFd, IntoRawFd},
     process::{Child, Command},
 };
 
@@ -29,12 +29,14 @@ impl Context for SandboxBuilder {
 
 impl SandboxBuilder {
     pub fn new(bin: impl Into<OsString>, command_args: Vec<OsString>) -> Result<Self, AppError> {
-        let ready_fd = tempfile::tempfile().map_err(AppError::FileTempAlloc)?;
-        ready_fd.share_with_children()?;
+        let (ready_rx, ready_tx) = rustix::pipe::pipe().map_err(AppError::PipeAlloc)?;
+        ready_rx.share_with_children()?;
 
         let mut bin = Command::new(bin.into());
         bin.arg(utils::SELF_INTERNAL_ARG);
-        bin.arg(ready_fd.as_raw_fd().to_string());
+        bin.arg(ready_rx.into_raw_fd().to_string());
+
+        let ready_fd = unsafe { File::from_raw_fd(ready_tx.into_raw_fd()) };
 
         Ok(Self {
             bin,
