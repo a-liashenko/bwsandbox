@@ -57,7 +57,7 @@ impl Service for DbusService {
 
     #[tracing::instrument]
     fn apply_after<C: Context>(&mut self, ctx: &mut C) -> Result<Scope, AppError> {
-        ctx.sandbox_mut()
+        ctx.command_mut()
             .arg("--bind")
             .arg(&self.proxy_bus)
             .arg(&self.sandboxed_bus);
@@ -65,7 +65,7 @@ impl Service for DbusService {
     }
 
     #[tracing::instrument]
-    fn start(mut self) -> Result<Self::Handle, AppError> {
+    fn start(mut self, _pid: u32) -> Result<Self::Handle, AppError> {
         const POLL: Duration = Duration::from_millis(100);
         const TOTAL_POLL: Duration = Duration::from_secs(3);
 

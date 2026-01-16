@@ -11,6 +11,9 @@ pub struct Config {
     pub services: ServiceConfig,
 }
 
+// Generate struct with all used services configurations
+// And generate enum with all built services
+// Pseudocode: if <service>_config -> create <service> from config -> push ServiceType(<service>(service))
 super::manager::define_services! {
     dbus => crate::services::DbusService,
     seccomp => crate::services::SeccompService,
@@ -33,7 +36,7 @@ impl Service for ServiceType {
         self.apply_after(ctx)
     }
 
-    fn start(self) -> Result<Self::Handle, AppError> {
-        self.start()
+    fn start(self, pid: u32) -> Result<Self::Handle, AppError> {
+        self.start(pid)
     }
 }

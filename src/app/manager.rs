@@ -62,10 +62,10 @@ macro_rules! define_services {
                 Ok(scope)
             }
 
-            pub fn start(self) -> Result<Box<dyn Handle>, AppError> {
+            pub fn start(self, pid: u32) -> Result<Box<dyn Handle>, AppError> {
                 let handle = match self {
                     $(
-                        Self::$name(v) => v.start().map(|v| Box::new(v) as _ )?,
+                        Self::$name(v) => v.start(pid).map(|v| Box::new(v) as _ )?,
                     )+
                 };
                 Ok(handle)

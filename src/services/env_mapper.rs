@@ -28,17 +28,17 @@ impl Service for EnvMapper {
 
     fn apply_before<C: Context>(&mut self, ctx: &mut C) -> Result<Scope, AppError> {
         if self.unset_all {
-            ctx.sandbox_mut().arg("--clearenv");
+            ctx.command_mut().arg("--clearenv");
         }
 
         for it in &self.keep {
             if let Ok(v) = std::env::var(it) {
-                ctx.sandbox_mut().arg("--setenv").arg(it).arg(v);
+                ctx.command_mut().arg("--setenv").arg(it).arg(v);
             }
         }
 
         for it in &self.unset {
-            ctx.sandbox_mut().arg("--unsetenv").arg(it);
+            ctx.command_mut().arg("--unsetenv").arg(it);
         }
 
         Ok(Scope::new())
@@ -48,7 +48,7 @@ impl Service for EnvMapper {
         Ok(Scope::new())
     }
 
-    fn start(self) -> Result<Self::Handle, AppError> {
+    fn start(self, _pid: u32) -> Result<Self::Handle, AppError> {
         Ok(())
     }
 }
