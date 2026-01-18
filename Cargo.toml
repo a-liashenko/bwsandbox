@@ -23,6 +23,7 @@ tracing = { version = "0.1", default-features = false, features = ["std", "attri
 lexopt = { version = "0.3", default-features = false }
 tracing-subscriber = { version = "0.3", default-features = false, features = ["ansi", "env-filter", "fmt", "registry"] }
 ctrlc = { version = "3.5.0", default-features = false, features = ["termination"] }
+serde_json = { version = "1.0", default-features = false, features = ["std"] }
 
 [dev-dependencies]
 toml = { version = "*", default-features = false, features = ["std", "serde", "parse", "display"] }
