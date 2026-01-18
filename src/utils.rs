@@ -10,9 +10,6 @@ pub const BWRAP_CMD: &str = "bwrap";
 pub const DBUS_CMD: &str = "xdg-dbus-proxy";
 pub const SLIRP4NETNS_CMD: &str = "slirp4netns";
 
-pub const SELF_CMD: &str = "/proc/self/exe";
-pub const SELF_INTERNAL_ARG: &str = "--internal-wait-ready";
-
 pub fn sandbox_id() -> &'static str {
     static PREFIX: std::sync::OnceLock<String> = std::sync::OnceLock::new();
     PREFIX.get_or_init(|| rand_id(16))
@@ -26,6 +23,7 @@ pub fn temp_dir() -> PathBuf {
     std::env::var("XDG_RUNTIME_DIR")
         .map(PathBuf::from)
         .unwrap_or(std::env::temp_dir())
+        .join(format!("{APP_NAME}-workdir-{}", sandbox_id()))
 }
 
 pub fn poll_file(path: &Path, poll: Duration, total: Duration) -> Result<bool, AppError> {

@@ -1,4 +1,4 @@
-use std::{ffi::OsString, fmt::Debug, process::ExitCode};
+use std::process::{ExitCode, ExitStatus};
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 
 mod app;
@@ -7,6 +7,7 @@ mod config;
 mod error;
 mod fd;
 mod services;
+mod temp_dir;
 mod utils;
 
 fn main() -> ExitCode {
@@ -23,30 +24,12 @@ fn main() -> ExitCode {
         .with(EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("warn")))
         .init();
 
-    let mut args = std::env::args_os().skip(1).peekable();
-    let first_arg = args.peek().map(|v| v.to_string_lossy());
-    let result = match first_arg.as_deref() {
-        Some(utils::SELF_INTERNAL_ARG) => run_bwrap(args),
-        _ => run(args),
-    };
-
-    if let Err(e) = result {
-        print_error(&e);
-        return ExitCode::FAILURE;
-    }
-
-    ExitCode::SUCCESS
-}
-
-#[tracing::instrument]
-fn run<I: Iterator<Item = OsString> + std::fmt::Debug>(args: I) -> Result<(), error::AppError> {
-    let _span = tracing::trace_span!("[orchestartor]").entered();
-    let args = match app::Args::from_iter(args) {
+    let args = match app::Args::from_iter(std::env::args_os()) {
         Ok(v) => v,
         Err(e) => {
             print_error(&e);
             print_help();
-            return Ok(());
+            return ExitCode::FAILURE;
         }
     };
 
@@ -56,17 +39,18 @@ fn run<I: Iterator<Item = OsString> + std::fmt::Debug>(args: I) -> Result<(), er
         unsafe { std::env::set_var("APPIMAGE_EXTRACT_AND_RUN", "1") };
     }
 
-    let status = app::App::start(args)?;
-    std::process::exit(status.code().unwrap_or(-1));
+    if let Err(e) = run(args) {
+        print_error(&e);
+        return ExitCode::FAILURE;
+    }
+
+    ExitCode::SUCCESS
 }
 
-#[tracing::instrument(skip(args))]
-fn run_bwrap<I: Iterator<Item = OsString> + Debug>(args: I) -> Result<(), error::AppError> {
-    let _span = tracing::trace_span!("[bwrap]").entered();
-
-    let args = bwrap::Args::from_iter(args).expect("Internal spawn args must be valid");
-    let status = bwrap::BwrapRunner::new(args).run()?;
-    std::process::exit(status.code().unwrap_or(-1));
+fn run(args: app::Args) -> Result<ExitStatus, error::AppError> {
+    let _guard = temp_dir::TempDirGuard::new(utils::temp_dir())?;
+    let status = app::App::start(args)?;
+    Ok(status)
 }
 
 fn print_error(e: &error::AppError) {

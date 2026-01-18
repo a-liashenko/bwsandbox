@@ -22,7 +22,7 @@ impl Args {
         let mut rest = Vec::new();
         let mut is_app_image = false;
 
-        let mut parser = Parser::from_args(iter);
+        let mut parser = Parser::from_iter(iter);
         while let Some(arg) = parser.next()? {
             match arg {
                 Long("appimage") => is_app_image = true,

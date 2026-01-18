@@ -11,6 +11,8 @@ pub enum AppError {
     FileFdShare(RawFd, rustix::io::Errno),
     #[error("Failed to alloc new tempfile, ec {0:?}")]
     FileTempAlloc(std::io::Error),
+    #[error("TemDir {0:?}: {1:?}")]
+    TempDir(PathBuf, std::io::Error),
     #[error("Env {0:?}: {1:?}")]
     Env(String, std::env::VarError),
     #[error("Failed to parse config {msg}", msg = .0.message())]
@@ -30,9 +32,9 @@ pub enum AppError {
     #[error("Failed to allocate new pipe: {0:?}")]
     PipeAlloc(rustix::io::Errno),
     #[error("Failed to read ready status from parent fd: {0}")]
-    PipeRead(std::io::Error),
-    #[error("Unexpected ready code from parent: {0}")]
-    PipeUnexpectedStatus(u8),
+    PipeIO(std::io::Error),
+    #[error("Failed to parse bwrap response {0:?}")]
+    BwrapInfo(serde_json::Error),
     //
     // #[error(transparent)]
     // Other(#[from] anyhow::Error),
