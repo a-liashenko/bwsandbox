@@ -1,7 +1,5 @@
-use crate::{
-    error::AppError,
-    service::{Context, Scope, Service},
-};
+use crate::error::AppError;
+use crate::services::{Context, Handle, Scope, Service};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize, Default)]
@@ -14,19 +12,18 @@ pub struct EnvMapper {
     unset: Vec<String>,
 }
 
+impl EnvMapper {
+    pub fn from_config(config: Self) -> Result<Self, AppError> {
+        Ok(config)
+    }
+}
+
 fn unset_all_default() -> bool {
     true
 }
 
-impl Service for EnvMapper {
-    type Config = Self;
-    type Handle = ();
-
-    fn from_config(config: Self::Config) -> Result<Self, AppError> {
-        Ok(config)
-    }
-
-    fn apply_before<C: Context>(&mut self, ctx: &mut C) -> Result<Scope, AppError> {
+impl<C: Context> Service<C> for EnvMapper {
+    fn apply_before(&mut self, ctx: &mut C) -> Result<Scope, AppError> {
         if self.unset_all {
             ctx.command_mut().arg("--clearenv");
         }
@@ -44,11 +41,11 @@ impl Service for EnvMapper {
         Ok(Scope::new())
     }
 
-    fn apply_after<C: Context>(&mut self, _ctx: &mut C) -> Result<Scope, AppError> {
+    fn apply_after(&mut self, _ctx: &mut C) -> Result<Scope, AppError> {
         Ok(Scope::new())
     }
 
-    fn start(self, _pid: u32) -> Result<Self::Handle, AppError> {
-        Ok(())
+    fn start(self: Box<Self>, _pid: u32) -> Result<Box<dyn Handle>, AppError> {
+        Ok(Box::new(()))
     }
 }
