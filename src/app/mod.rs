@@ -1,84 +1,55 @@
-use crate::{
-    app::config::ServiceType,
-    error::AppError,
-    service::{Handle, Service},
-    utils,
-};
-use std::{
-    ffi::{OsStr, OsString},
-    process::ExitStatus,
-};
+use crate::{bwrap::BwrapProcBuilder, error::AppError, services::Handle, utils};
+pub use args::Args;
+use std::process::ExitStatus;
 
+mod args;
 mod config;
-mod internal;
-mod manager;
-mod sandbox;
-mod scope_destroyer;
 
-use config::Config;
-use sandbox::SandboxBuilder;
+// App responsibility:
+// Parse, load and validate bwrap and services configuration
+// Start and forward bwrap and sandboxed app arguments into child instance
+// Configure and run all services
+// Signal child instance that everyting ready and wait until child process finished
+// Cleanup resources registered in Scope by services
+// Graceful shutdown of services (if implemented) and scoped resources cleanup
 
-pub use internal::InternalApp;
+pub struct App;
+impl App {
+    pub fn start(args: Args) -> Result<ExitStatus, AppError> {
+        let config: config::Config = utils::deserialize(&args.config)?;
+
+        let bwrap_args = config.bwrap.collect_args()?;
+        let mut bwrap_builder = BwrapProcBuilder::new(bwrap_args)?;
+
+        let mut services = config.services.load()?;
+        let _cleanup = bwrap_builder.apply_services(&mut services)?;
+
+        let proc = bwrap_builder.spawn(args.app, args.app_args)?;
+        let _handles = services
+            .into_iter()
+            .map(|v| v.start(proc.pid()).map(ServiceHandle::new))
+            .collect::<Result<Vec<ServiceHandle>, _>>()?;
+
+        let status = proc.wait()?;
+        Ok(status)
+    }
+}
 
 #[derive(Debug)]
-pub struct App {
-    sandbox: SandboxBuilder,
-    services: Vec<ServiceType>,
+pub struct ServiceHandle {
+    handle: Box<dyn Handle>,
 }
 
-impl App {
-    pub fn try_parse(content: &str) -> Result<Self, AppError> {
-        let config: Config = utils::deserialize(content)?;
-
-        let args = config.bwrap.collect_args()?;
-        let sandbox = SandboxBuilder::new(utils::SELF_CMD, args)?;
-
-        let services = config.services.load_services()?;
-
-        Ok(Self { sandbox, services })
-    }
-
-    pub fn apply_services(&mut self) -> Result<(), AppError> {
-        for it in &mut self.services {
-            self.sandbox.apply_before(it)?;
-        }
-
-        self.sandbox.prebuild();
-
-        for it in &mut self.services {
-            self.sandbox.apply_after(it)?;
-        }
-
-        Ok(())
-    }
-
-    pub fn run<A, I>(self, app: A, args: I) -> Result<ExitStatus, AppError>
-    where
-        A: AsRef<OsStr>,
-        I: Iterator<Item = OsString>,
-    {
-        let mut sandbox = self.sandbox.build(app, args)?;
-        tracing::info!("internal command: {:?}", sandbox.get_command());
-
-        let mut internal = sandbox.start()?;
-
-        // Start all background services. Service::start should block until its ready
-        let mut handles = services_start(self.services.into_iter(), internal.id())?;
-        sandbox.notify_ready()?;
-
-        let exit_status = internal.wait();
-        if let Err(e) = handles.iter_mut().try_for_each(Handle::stop) {
-            tracing::error!("Failed to stop service with {e:?}");
-        }
-
-        exit_status.map_err(AppError::spawn(utils::SELF_CMD))
+impl ServiceHandle {
+    pub fn new(handle: Box<dyn Handle>) -> Self {
+        Self { handle }
     }
 }
 
-fn services_start<S, I>(iter: I, pid: u32) -> Result<Vec<S::Handle>, AppError>
-where
-    S: Service,
-    I: Iterator<Item = S>,
-{
-    iter.map(|v| v.start(pid)).collect::<Result<Vec<_>, _>>()
+impl Drop for ServiceHandle {
+    fn drop(&mut self) {
+        if let Err(e) = self.handle.stop() {
+            tracing::error!("Failed to stop service: {e:?}")
+        }
+    }
 }

@@ -7,7 +7,7 @@ use std::{
 pub enum AppError {
     #[error("File {0:?}: {1:?}")]
     File(PathBuf, std::io::Error),
-    #[error("Failed to use fcntl to share fd {0} with forked apps, ec {1}")]
+    #[error("Failed to use fcntl to share fd {0} with spawned apps, ec {1}")]
     FileFdShare(RawFd, rustix::io::Errno),
     #[error("Failed to alloc new tempfile, ec {0:?}")]
     FileTempAlloc(std::io::Error),

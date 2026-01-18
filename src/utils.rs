@@ -8,6 +8,7 @@ use crate::error::AppError;
 pub const APP_NAME: &str = env!("CARGO_CRATE_NAME");
 pub const BWRAP_CMD: &str = "bwrap";
 pub const DBUS_CMD: &str = "xdg-dbus-proxy";
+pub const SLIRP4NETNS_CMD: &str = "slirp4netns";
 
 pub const SELF_CMD: &str = "/proc/self/exe";
 pub const SELF_INTERNAL_ARG: &str = "--internal-wait-ready";
