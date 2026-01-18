@@ -16,7 +16,7 @@ impl TempDirGuard {
 impl Drop for TempDirGuard {
     fn drop(&mut self) {
         if let Err(e) = std::fs::remove_dir_all(&self.dir) {
-            tracing::error!("Failed to remove sandbox temp dir: {e:?}")
+            tracing::error!("Failed to remove sandbox temp dir: {e:?}");
         }
     }
 }

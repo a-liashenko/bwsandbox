@@ -9,7 +9,7 @@ pub trait AsFdExtra {
 impl<T: AsFd> AsFdExtra for T {
     fn share_with_children(&self) -> Result<(), AppError> {
         match fcntl_setfd(self, rustix::io::FdFlags::empty()) {
-            Ok(_) => Ok(()),
+            Ok(()) => Ok(()),
             Err(e) => Err(AppError::FileFdShare(self.as_fd().as_raw_fd(), e)),
         }
     }

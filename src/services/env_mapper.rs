@@ -13,6 +13,9 @@ pub struct EnvMapper {
 }
 
 impl EnvMapper {
+    // Used as build callack for same methods
+    // Warning ignored to keep consistent across other services logic
+    #[allow(clippy::unnecessary_wraps)]
     pub fn from_config(config: Self) -> Result<Self, AppError> {
         Ok(config)
     }

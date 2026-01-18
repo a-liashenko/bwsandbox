@@ -60,7 +60,7 @@ impl<C: Context> Service<C> for DbusService {
     }
 
     #[tracing::instrument]
-    fn start(mut self: Box<Self>, _pid: u32) -> Result<HandleOwned, AppError> {
+    fn start(mut self: Box<Self>, _: u32) -> Result<HandleOwned, AppError> {
         const POLL: Duration = Duration::from_millis(100);
         const TOTAL_POLL: Duration = Duration::from_secs(3);
 

@@ -45,7 +45,7 @@ impl ScopeCleanup {
         let scopes_arc = Arc::clone(&scopes);
         let sig_handle = move || {
             tracing::info!("----- Called Ctrl + C");
-            destroy_scopes(Arc::clone(&scopes_arc));
+            destroy_scopes(&scopes_arc);
         };
         ctrlc::set_handler(sig_handle)?;
 
@@ -56,12 +56,12 @@ impl ScopeCleanup {
 impl Drop for ScopeCleanup {
     fn drop(&mut self) {
         let scopes = std::mem::take(&mut self.scopes);
-        destroy_scopes(scopes);
+        destroy_scopes(&scopes);
     }
 }
 
 #[tracing::instrument]
-fn destroy_scopes(scopes: Arc<Mutex<Vec<Scope>>>) {
+fn destroy_scopes(scopes: &Arc<Mutex<Vec<Scope>>>) {
     let scopes = scopes.lock().map(|mut v| std::mem::take(&mut *v));
     let scopes = match scopes {
         Ok(v) if v.is_empty() => {

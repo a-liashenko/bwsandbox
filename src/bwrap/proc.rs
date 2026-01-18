@@ -103,8 +103,8 @@ impl BwrapProc {
     fn new(proc: Child, ready_tx: File, nested_proc_pid: u32) -> Self {
         Self {
             proc,
-            ready_tx,
             nested_proc_pid,
+            ready_tx,
         }
     }
 

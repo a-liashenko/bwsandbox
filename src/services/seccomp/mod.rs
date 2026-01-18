@@ -65,7 +65,7 @@ impl<C: Context> Service<C> for SeccompService {
     }
 
     #[tracing::instrument]
-    fn start(self: Box<Self>, _pid: u32) -> Result<HandleOwned, AppError> {
+    fn start(self: Box<Self>, _: u32) -> Result<HandleOwned, AppError> {
         Ok(HandleOwned::new(self.fd))
     }
 }
