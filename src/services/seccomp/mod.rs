@@ -1,6 +1,6 @@
 use crate::error::AppError;
 use crate::fd::AsFdExtra;
-use crate::service::{Context, Scope, Service};
+use crate::services::{Context, Handle, Scope, Service};
 use anyhow::Context as _;
 use std::io::Seek;
 use std::{fs::File, os::fd::AsRawFd};
@@ -16,12 +16,8 @@ pub struct SeccompService {
     fd: File,
 }
 
-impl Service for SeccompService {
-    type Config = Config;
-    type Handle = Handle;
-
-    #[tracing::instrument]
-    fn from_config(cfg: Self::Config) -> Result<Self, AppError> {
+impl SeccompService {
+    pub fn from_config(cfg: Config) -> Result<Self, AppError> {
         let mut filter = ffi::FilterCtx::new(cfg.default_action).map_err(AppError::SeccompLib)?;
 
         for arch in cfg.extra_arch {
@@ -53,13 +49,15 @@ impl Service for SeccompService {
 
         Ok(Self { fd })
     }
+}
 
-    fn apply_before<C: Context>(&mut self, _ctx: &mut C) -> Result<Scope, AppError> {
+impl<C: Context> Service<C> for SeccompService {
+    fn apply_before(&mut self, _ctx: &mut C) -> Result<Scope, AppError> {
         Ok(Scope::new())
     }
 
     #[tracing::instrument]
-    fn apply_after<C: Context>(&mut self, ctx: &mut C) -> Result<Scope, AppError> {
+    fn apply_after(&mut self, ctx: &mut C) -> Result<Scope, AppError> {
         ctx.command_mut()
             .arg("--seccomp")
             .arg(self.fd.as_raw_fd().to_string());
@@ -67,19 +65,7 @@ impl Service for SeccompService {
     }
 
     #[tracing::instrument]
-    fn start(self, _pid: u32) -> Result<Self::Handle, AppError> {
-        Ok(Handle { _fd: self.fd })
-    }
-}
-
-#[derive(Debug)]
-pub struct Handle {
-    _fd: File,
-}
-
-impl crate::service::Handle for Handle {
-    fn stop(&mut self) -> Result<(), AppError> {
-        // Do nothing, tempfile will be closed by OS
-        Ok(())
+    fn start(self: Box<Self>, _pid: u32) -> Result<Box<dyn Handle>, AppError> {
+        Ok(Box::new(self.fd))
     }
 }

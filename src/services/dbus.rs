@@ -1,13 +1,10 @@
-use crate::{
-    config::{Cmd, EnvVal, TempFileVal},
-    error::AppError,
-    service::{Context, Scope, Service},
-    utils,
-};
+use crate::config::{Cmd, EnvVal, TempFileVal};
+use crate::services::{Context, Handle, Scope, Service};
+use crate::{error::AppError, utils};
 use serde::Deserialize;
 use std::{
     path::PathBuf,
-    process::{Child, Command, Stdio},
+    process::{Command, Stdio},
     time::Duration,
 };
 
@@ -27,12 +24,8 @@ pub struct DbusService {
     command: Command,
 }
 
-impl Service for DbusService {
-    type Config = Config;
-    type Handle = Handle;
-
-    #[tracing::instrument]
-    fn from_config(cfg: Self::Config) -> Result<Self, AppError> {
+impl DbusService {
+    pub fn from_config(cfg: Config) -> Result<Self, AppError> {
         let inline_args = cfg.cmd.iter_inline();
         let template_args = cfg.cmd.iter_template()?;
 
@@ -50,13 +43,15 @@ impl Service for DbusService {
             proxy_bus: cfg.proxy_bus.into_inner(),
         })
     }
+}
 
-    fn apply_before<C: Context>(&mut self, _ctx: &mut C) -> Result<Scope, AppError> {
+impl<C: Context> Service<C> for DbusService {
+    fn apply_before(&mut self, _ctx: &mut C) -> Result<Scope, AppError> {
         Ok(Scope::new())
     }
 
     #[tracing::instrument]
-    fn apply_after<C: Context>(&mut self, ctx: &mut C) -> Result<Scope, AppError> {
+    fn apply_after(&mut self, ctx: &mut C) -> Result<Scope, AppError> {
         ctx.command_mut()
             .arg("--bind")
             .arg(&self.proxy_bus)
@@ -65,7 +60,7 @@ impl Service for DbusService {
     }
 
     #[tracing::instrument]
-    fn start(mut self, _pid: u32) -> Result<Self::Handle, AppError> {
+    fn start(mut self: Box<Self>, _pid: u32) -> Result<Box<dyn Handle>, AppError> {
         const POLL: Duration = Duration::from_millis(100);
         const TOTAL_POLL: Duration = Duration::from_secs(3);
 
@@ -73,7 +68,7 @@ impl Service for DbusService {
             .command
             .stdin(Stdio::null())
             .spawn()
-            .map_err(AppError::spawn("dbus-proxy"))?;
+            .map_err(AppError::spawn(utils::DBUS_CMD))?;
 
         let exists = crate::utils::poll_file(&self.proxy_bus, POLL, TOTAL_POLL)?;
         if !exists {
@@ -81,21 +76,6 @@ impl Service for DbusService {
             return Err(AppError::file(&self.proxy_bus)(err.into()));
         }
 
-        Ok(Handle { child })
-    }
-}
-
-#[derive(Debug)]
-#[repr(transparent)]
-pub struct Handle {
-    child: Child,
-}
-
-impl crate::service::Handle for Handle {
-    #[tracing::instrument]
-    fn stop(&mut self) -> Result<(), AppError> {
-        let res = self.child.kill();
-        tracing::trace!("DBus proxy kill status: {res:?}");
-        Ok(())
+        Ok(Box::new(child))
     }
 }

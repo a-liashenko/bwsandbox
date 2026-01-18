@@ -1,4 +1,5 @@
-use crate::{args::InternalArgs, error::AppError, utils};
+use super::Args;
+use crate::{error::AppError, utils};
 use std::{
     ffi::OsString,
     fs::File,
@@ -8,13 +9,13 @@ use std::{
 };
 
 #[derive(Debug)]
-pub struct InternalApp<I> {
+pub struct BwrapRunner<I> {
     ready_fd: File,
     args: I,
 }
 
-impl<I: IntoIterator<Item = OsString>> InternalApp<I> {
-    pub fn new(args: InternalArgs<I>) -> Self {
+impl<I: IntoIterator<Item = OsString>> BwrapRunner<I> {
+    pub fn new(args: Args<I>) -> Self {
         let ready_fd = unsafe { File::from_raw_fd(args.ready_fd) };
         Self {
             ready_fd,
@@ -26,7 +27,7 @@ impl<I: IntoIterator<Item = OsString>> InternalApp<I> {
         let mut command = Command::new(utils::BWRAP_CMD);
         command.args(self.args);
 
-        // Services startup should take too much time, raed interrupt ignored because chance is very low
+        // Services startup shouldn't take too much time, raed interrupt ignored because chance is very low
         Self::wait_parent(&mut self.ready_fd)?;
 
         let status = command
