@@ -69,7 +69,6 @@ impl<C: Context> Service<C> for Slirp4netns {
 
         let child = command
             .stdout(Stdio::null())
-            .stderr(Stdio::null())
             .spawn()
             .map_err(AppError::spawn(utils::SLIRP4NETNS_CMD))?;
         Ok(HandleOwned::new(child))
