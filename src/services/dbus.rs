@@ -53,7 +53,7 @@ impl<C: Context> Service<C> for DbusService {
     #[tracing::instrument]
     fn apply_after(&mut self, ctx: &mut C) -> Result<Scope, AppError> {
         ctx.command_mut()
-            .arg("--bind")
+            .arg("--symlink")
             .arg(&self.proxy_bus)
             .arg(&self.sandboxed_bus);
         Ok(Scope::new().remove_file(&self.proxy_bus))
