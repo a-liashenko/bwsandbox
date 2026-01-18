@@ -1,5 +1,5 @@
 use crate::error::AppError;
-use crate::services::{Context, Handle, Scope, Service};
+use crate::services::{Context, HandleOwned, Scope, Service};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize, Default)]
@@ -45,7 +45,7 @@ impl<C: Context> Service<C> for EnvMapper {
         Ok(Scope::new())
     }
 
-    fn start(self: Box<Self>, _pid: u32) -> Result<Box<dyn Handle>, AppError> {
-        Ok(Box::new(()))
+    fn start(self: Box<Self>, _pid: u32) -> Result<HandleOwned, AppError> {
+        Ok(HandleOwned::new(()))
     }
 }

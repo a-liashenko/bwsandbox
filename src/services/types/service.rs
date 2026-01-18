@@ -4,7 +4,7 @@ use crate::error::AppError;
 pub trait Service<C: Context> {
     fn apply_before(&mut self, ctx: &mut C) -> Result<Scope, AppError>;
     fn apply_after(&mut self, ctx: &mut C) -> Result<Scope, AppError>;
-    fn start(self: Box<Self>, pid: u32) -> Result<Box<dyn Handle>, AppError>;
+    fn start(self: Box<Self>, pid: u32) -> Result<HandleOwned, AppError>;
 }
 
 pub trait Context: std::fmt::Debug {
@@ -42,5 +42,25 @@ impl Handle for std::fs::File {
 impl Handle for Box<dyn Handle> {
     fn stop(&mut self) -> Result<(), AppError> {
         self.as_mut().stop()
+    }
+}
+
+#[derive(Debug)]
+pub struct HandleOwned {
+    handle: Box<dyn Handle>,
+}
+
+impl HandleOwned {
+    pub fn new<H: Handle + 'static>(handle: H) -> Self {
+        let handle = Box::new(handle);
+        Self { handle }
+    }
+}
+
+impl Drop for HandleOwned {
+    fn drop(&mut self) {
+        if let Err(e) = self.handle.stop() {
+            tracing::error!("Failed to stop service with {e:?}");
+        }
     }
 }

@@ -1,4 +1,4 @@
-use crate::{bwrap::BwrapProcBuilder, error::AppError, services::Handle, utils};
+use crate::{bwrap::BwrapProcBuilder, error::AppError, utils};
 pub use args::Args;
 use std::process::ExitStatus;
 
@@ -27,29 +27,10 @@ impl App {
         let proc = bwrap_builder.spawn(args.app, args.app_args)?;
         let _handles = services
             .into_iter()
-            .map(|v| v.start(proc.pid()).map(ServiceHandle::new))
-            .collect::<Result<Vec<ServiceHandle>, _>>()?;
+            .map(|v| v.start(proc.pid()))
+            .collect::<Result<Vec<_>, _>>()?;
 
         let status = proc.wait()?;
         Ok(status)
-    }
-}
-
-#[derive(Debug)]
-pub struct ServiceHandle {
-    handle: Box<dyn Handle>,
-}
-
-impl ServiceHandle {
-    pub fn new(handle: Box<dyn Handle>) -> Self {
-        Self { handle }
-    }
-}
-
-impl Drop for ServiceHandle {
-    fn drop(&mut self) {
-        if let Err(e) = self.handle.stop() {
-            tracing::error!("Failed to stop service: {e:?}")
-        }
     }
 }

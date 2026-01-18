@@ -1,5 +1,5 @@
 use crate::config::{Cmd, EnvVal, TempFileVal};
-use crate::services::{Context, Handle, Scope, Service};
+use crate::services::{Context, HandleOwned, Scope, Service};
 use crate::{error::AppError, utils};
 use serde::Deserialize;
 use std::{
@@ -60,7 +60,7 @@ impl<C: Context> Service<C> for DbusService {
     }
 
     #[tracing::instrument]
-    fn start(mut self: Box<Self>, _pid: u32) -> Result<Box<dyn Handle>, AppError> {
+    fn start(mut self: Box<Self>, _pid: u32) -> Result<HandleOwned, AppError> {
         const POLL: Duration = Duration::from_millis(100);
         const TOTAL_POLL: Duration = Duration::from_secs(3);
 
@@ -76,6 +76,6 @@ impl<C: Context> Service<C> for DbusService {
             return Err(AppError::file(&self.proxy_bus)(err.into()));
         }
 
-        Ok(Box::new(child))
+        Ok(HandleOwned::new(child))
     }
 }
