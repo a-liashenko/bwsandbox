@@ -1,16 +1,17 @@
 use crate::bwrap::events::{Events, EventsReader, SandboxStatus};
+use crate::fd::{AsFdArg, SharedPipe};
 use crate::services::{Context, Scope, ScopeCleanup, Service};
-use crate::{error::AppError, fd::AsFdExtra, utils};
+use crate::{error::AppError, utils};
 use std::io::{PipeReader, PipeWriter, Write};
 use std::os::unix::process::ExitStatusExt;
 use std::process::{Child, ExitStatus, Stdio};
-use std::{ffi::OsString, os::fd::IntoRawFd, process::Command};
+use std::{ffi::OsString, process::Command};
 
 #[derive(Debug)]
 pub struct BwrapProcBuilder {
     args: Vec<OsString>,
-    ready_tx: PipeWriter,
-    info_rx: PipeReader,
+    ready: SharedPipe,
+    info: SharedPipe,
     command: Command,
 }
 
@@ -29,21 +30,17 @@ impl BwrapProcBuilder {
         command.arg(utils::temp_dir());
 
         // Block bwrap until all services ready and operational
-        let (ready_rx, ready_tx) = std::io::pipe().map_err(AppError::PipeAlloc)?;
-        ready_rx.share_with_children()?;
-        command.arg("--block-fd");
-        command.arg(ready_rx.into_raw_fd().to_string());
+        let mut ready = SharedPipe::new()?;
+        command.arg("--block-fd").arg_fd(ready.share_rx()?)?;
 
         // Read bwrap events
-        let (info_rx, info_tx) = std::io::pipe().map_err(AppError::PipeAlloc)?;
-        info_tx.share_with_children()?;
-        command.arg("--json-status-fd");
-        command.arg(info_tx.into_raw_fd().to_string());
+        let mut info = SharedPipe::new()?;
+        command.arg("--json-status-fd").arg_fd(info.share_tx()?)?;
 
         Ok(Self {
             args,
-            ready_tx,
-            info_rx,
+            ready,
+            info,
             command,
         })
     }
@@ -78,7 +75,7 @@ impl BwrapProcBuilder {
             .spawn()
             .map_err(AppError::spawn(utils::BWRAP_CMD))?;
 
-        let proc = BwrapProc::new(proc, self.ready_tx, self.info_rx)?;
+        let proc = BwrapProc::new(proc, self.ready.into_tx(), self.info.into_rx())?;
         Ok(proc)
     }
 }
@@ -92,16 +89,16 @@ pub struct BwrapProc {
 }
 
 impl BwrapProc {
-    fn new(proc: Child, ready_tx: PipeWriter, info_rx: PipeReader) -> Result<Self, AppError> {
+    fn new(proc: Child, ready: PipeWriter, info: PipeReader) -> Result<Self, AppError> {
         // Wait until bwrap fully initialized
-        let mut reader = EventsReader::new(info_rx);
+        let mut reader = EventsReader::new(info);
         let status = reader.try_next::<SandboxStatus>()?;
 
         Ok(Self {
             proc,
             status,
             reader,
-            ready: ready_tx,
+            ready,
         })
     }
 

@@ -1,7 +1,9 @@
 use crate::bwrap::SandboxStatus;
+use crate::fd::{AsFdArg, SharedPipe};
 use crate::services::{Context, HandleOwned, Scope, Service};
 use crate::{config::Cmd, error::AppError, utils};
 use serde::Deserialize;
+use std::io::Read;
 use std::process::Stdio;
 use std::{ffi::OsString, process::Command};
 
@@ -69,10 +71,16 @@ impl<C: Context> Service<C> for Slirp4netns {
     }
 
     fn start(self: Box<Self>, status: &SandboxStatus) -> Result<HandleOwned, AppError> {
-        // TODO: Use slirp4netns --ready_fd and wait until network configured
+        use std::io::ErrorKind;
+
+        let mut ready = SharedPipe::new()?;
         let mut command = Command::new(utils::SLIRP4NETNS_CMD);
-        command.args(self.args).arg(status.child_pid.to_string());
-        command.arg(self.if_name);
+        command
+            .args(self.args)
+            .arg("--ready-fd")
+            .arg_fd(ready.share_tx()?)?
+            .arg(status.child_pid.to_string())
+            .arg(self.if_name);
         tracing::info!("Slirp4netns command: {:?}", command);
 
         if self.quiet {
@@ -80,9 +88,18 @@ impl<C: Context> Service<C> for Slirp4netns {
             command.stderr(Stdio::null());
         }
 
+        // Start slirp4netns and wait until network is ready
         let child = command
             .spawn()
             .map_err(AppError::spawn(utils::SLIRP4NETNS_CMD))?;
-        Ok(HandleOwned::new(child))
+
+        let mut buf = [0u8; 1];
+        let mut ready_rx = ready.into_rx();
+        let bytes = ready_rx.read(&mut buf).map_err(AppError::io(file!()))?;
+        if bytes == 0 {
+            AppError::io("slirp4netns ready read")(ErrorKind::UnexpectedEof.into()).into_err()
+        } else {
+            Ok(HandleOwned::new(child))
+        }
     }
 }
