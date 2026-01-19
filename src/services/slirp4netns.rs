@@ -9,6 +9,8 @@ pub struct Config {
     #[serde(default = "default_if_name")]
     pub if_name: String,
     pub resolv_conf: Option<String>,
+    #[serde(default = "default_quiet")]
+    pub quiet: bool,
     #[serde(flatten)]
     pub cmd: Cmd,
 }
@@ -17,9 +19,14 @@ fn default_if_name() -> String {
     "tap0".into()
 }
 
+fn default_quiet() -> bool {
+    true
+}
+
 pub struct Slirp4netns {
     args: Vec<OsString>,
     if_name: String,
+    quiet: bool,
     resolv_conf: Option<String>,
 }
 
@@ -30,6 +37,7 @@ impl Slirp4netns {
             args,
             if_name: config.if_name,
             resolv_conf: config.resolv_conf,
+            quiet: config.quiet,
         })
     }
 }
@@ -64,11 +72,14 @@ impl<C: Context> Service<C> for Slirp4netns {
         let mut command = Command::new(utils::SLIRP4NETNS_CMD);
         command.args(self.args).arg(pid.to_string());
         command.arg(self.if_name);
-
         tracing::trace!("Slirp4netns command: {:?}", command);
 
+        if self.quiet {
+            command.stdout(Stdio::null());
+            command.stderr(Stdio::null());
+        }
+
         let child = command
-            .stdout(Stdio::null())
             .spawn()
             .map_err(AppError::spawn(utils::SLIRP4NETNS_CMD))?;
         Ok(HandleOwned::new(child))
