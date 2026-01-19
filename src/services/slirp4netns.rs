@@ -1,3 +1,4 @@
+use crate::bwrap::SandboxStatus;
 use crate::services::{Context, HandleOwned, Scope, Service};
 use crate::{config::Cmd, error::AppError, utils};
 use serde::Deserialize;
@@ -67,10 +68,10 @@ impl<C: Context> Service<C> for Slirp4netns {
         Ok(scope)
     }
 
-    fn start(self: Box<Self>, pid: u32) -> Result<HandleOwned, AppError> {
+    fn start(self: Box<Self>, status: &SandboxStatus) -> Result<HandleOwned, AppError> {
         // TODO: Use slirp4netns --ready_fd and wait until network configured
         let mut command = Command::new(utils::SLIRP4NETNS_CMD);
-        command.args(self.args).arg(pid.to_string());
+        command.args(self.args).arg(status.child_pid.to_string());
         command.arg(self.if_name);
         tracing::info!("Slirp4netns command: {:?}", command);
 

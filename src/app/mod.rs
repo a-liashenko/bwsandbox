@@ -25,9 +25,10 @@ impl App {
         let _cleanup = bwrap_builder.apply_services(&mut services)?;
 
         let proc = bwrap_builder.spawn(args.app, args.app_args)?;
+        let proc_status = proc.app_status();
         let _handles = services
             .into_iter()
-            .map(|v| v.start(proc.pid()))
+            .map(|v| v.start(&proc_status))
             .collect::<Result<Vec<_>, _>>()?;
 
         let status = proc.wait()?;

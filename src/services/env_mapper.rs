@@ -1,3 +1,4 @@
+use crate::bwrap::SandboxStatus;
 use crate::error::AppError;
 use crate::services::{Context, HandleOwned, Scope, Service};
 use serde::{Deserialize, Serialize};
@@ -48,7 +49,7 @@ impl<C: Context> Service<C> for EnvMapper {
         Ok(Scope::new())
     }
 
-    fn start(self: Box<Self>, _pid: u32) -> Result<HandleOwned, AppError> {
+    fn start(self: Box<Self>, _: &SandboxStatus) -> Result<HandleOwned, AppError> {
         Ok(HandleOwned::new(()))
     }
 }

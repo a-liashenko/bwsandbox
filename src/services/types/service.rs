@@ -1,10 +1,10 @@
 use super::scope::Scope;
-use crate::error::AppError;
+use crate::{bwrap::SandboxStatus, error::AppError};
 
 pub trait Service<C: Context> {
     fn apply_before(&mut self, ctx: &mut C) -> Result<Scope, AppError>;
     fn apply_after(&mut self, ctx: &mut C) -> Result<Scope, AppError>;
-    fn start(self: Box<Self>, pid: u32) -> Result<HandleOwned, AppError>;
+    fn start(self: Box<Self>, status: &SandboxStatus) -> Result<HandleOwned, AppError>;
 }
 
 pub trait Context: std::fmt::Debug {
