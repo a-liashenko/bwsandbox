@@ -1,21 +1,16 @@
+use crate::bwrap::events::{Events, EventsReader, SandboxStatus};
 use crate::services::{Context, Scope, ScopeCleanup, Service};
 use crate::{error::AppError, fd::AsFdExtra, utils};
-use std::io::{BufRead, BufReader, Write};
+use std::io::{PipeReader, PipeWriter, Write};
+use std::os::unix::process::ExitStatusExt;
 use std::process::{Child, ExitStatus, Stdio};
-use std::{
-    ffi::OsString,
-    fs::File,
-    os::fd::{FromRawFd, IntoRawFd},
-    process::Command,
-};
-
-type BoxedService = Box<dyn Service<BwrapProcBuilder>>;
+use std::{ffi::OsString, os::fd::IntoRawFd, process::Command};
 
 #[derive(Debug)]
 pub struct BwrapProcBuilder {
     args: Vec<OsString>,
-    ready_tx: File,
-    info_rx: File,
+    ready_tx: PipeWriter,
+    info_rx: PipeReader,
     command: Command,
 }
 
@@ -28,24 +23,22 @@ impl Context for BwrapProcBuilder {
 impl BwrapProcBuilder {
     pub fn new(args: Vec<OsString>) -> Result<Self, AppError> {
         let mut command = Command::new(utils::BWRAP_CMD);
+        // Bind working dir into sandbox, used if service need to create content in sandbox and mount it AFTER sandbox started
         command.arg("--bind");
         command.arg(utils::temp_dir());
         command.arg(utils::temp_dir());
 
-        // Create pipe to signal bwrap that parent initialized all services
-        let (ready_rx, ready_tx) = rustix::pipe::pipe().map_err(AppError::PipeAlloc)?;
+        // Block bwrap until all services ready and operational
+        let (ready_rx, ready_tx) = std::io::pipe().map_err(AppError::PipeAlloc)?;
         ready_rx.share_with_children()?;
         command.arg("--block-fd");
         command.arg(ready_rx.into_raw_fd().to_string());
 
-        // Create pipe to read spawned child pid
-        let (info_rx, info_tx) = rustix::pipe::pipe().map_err(AppError::PipeAlloc)?;
+        // Read bwrap events
+        let (info_rx, info_tx) = std::io::pipe().map_err(AppError::PipeAlloc)?;
         info_tx.share_with_children()?;
-        command.arg("--info-fd");
+        command.arg("--json-status-fd");
         command.arg(info_tx.into_raw_fd().to_string());
-
-        let ready_tx = unsafe { File::from_raw_fd(ready_tx.into_raw_fd()) };
-        let info_rx = unsafe { File::from_raw_fd(info_rx.into_raw_fd()) };
 
         Ok(Self {
             args,
@@ -57,7 +50,7 @@ impl BwrapProcBuilder {
 
     pub fn apply_services(
         &mut self,
-        services: &mut [BoxedService],
+        services: &mut [Box<dyn Service<BwrapProcBuilder>>],
     ) -> Result<ScopeCleanup, AppError> {
         let mut services_scope = Scope::new();
         for it in services.iter_mut() {
@@ -75,53 +68,79 @@ impl BwrapProcBuilder {
     }
 
     pub fn spawn(mut self, app: OsString, args: Vec<OsString>) -> Result<BwrapProc, AppError> {
-        tracing::info!("Spawning bwrap: {:?}", self.command);
-        let child = self
+        self.command.arg(app).args(args);
+        tracing::info!("Bwrap command: {:?}", self.command);
+
+        let proc = self
             .command
-            .arg("--bind")
-            .arg(utils::temp_dir())
-            .arg(utils::temp_dir())
-            .arg(app)
-            .args(args)
             .stdout(Stdio::inherit())
+            .stderr(Stdio::inherit())
             .spawn()
             .map_err(AppError::spawn(utils::BWRAP_CMD))?;
 
-        let info = Info::from_pipe(&mut self.info_rx)?;
-        Ok(BwrapProc::new(child, self.ready_tx, info.child_pid))
+        let proc = BwrapProc::new(proc, self.ready_tx, self.info_rx)?;
+        Ok(proc)
     }
 }
 
 #[derive(Debug)]
 pub struct BwrapProc {
     proc: Child,
-    nested_proc_pid: u32,
-    ready_tx: File,
+    status: SandboxStatus,
+    reader: EventsReader<PipeReader>,
+    ready: PipeWriter,
 }
 
 impl BwrapProc {
-    fn new(proc: Child, ready_tx: File, nested_proc_pid: u32) -> Self {
-        Self {
+    fn new(proc: Child, ready_tx: PipeWriter, info_rx: PipeReader) -> Result<Self, AppError> {
+        // Wait until bwrap fully initialized
+        let mut reader = EventsReader::new(info_rx);
+        let status = reader.try_next::<SandboxStatus>()?;
+
+        Ok(Self {
             proc,
-            nested_proc_pid,
-            ready_tx,
-        }
+            status,
+            reader,
+            ready: ready_tx,
+        })
     }
 
-    pub fn pid(&self) -> u32 {
-        self.nested_proc_pid
+    pub fn app_status(&self) -> &SandboxStatus {
+        &self.status
     }
 
     pub fn wait(mut self) -> Result<ExitStatus, AppError> {
-        // Notify bwrap that it can start sandboxed app
-        self.ready_tx.write(&[1]).map_err(AppError::PipeIO)?;
+        // Notify bwrap to start sandboxed app
+        self.ready
+            .write(&[1])
+            .map_err(AppError::io("bwrap ready write"))?;
+        let status = self.wait_exit_event()?;
 
-        let status = self
-            .proc
+        self.proc
             .wait()
             .map_err(AppError::spawn(utils::BWRAP_CMD))?;
-
         Ok(status)
+    }
+
+    fn wait_exit_event(&mut self) -> Result<ExitStatus, AppError> {
+        use std::io::ErrorKind;
+
+        loop {
+            let status = match self.reader.try_next::<Events>() {
+                Ok(Events::Exit(status)) => status.exit_code,
+                Err(AppError::Io(ctx, e)) if e.kind() == ErrorKind::UnexpectedEof => {
+                    tracing::warn!("Bwrap crashed? Context: {ctx}");
+                    -1
+                }
+                Ok(e) => {
+                    tracing::warn!("Unhandled bwrap event {e:?}");
+                    continue;
+                }
+                Err(e) => return Err(e),
+            };
+
+            return Ok(ExitStatus::from_raw(status));
+        }
     }
 }
 
@@ -138,25 +157,6 @@ impl Drop for BwrapProc {
             }
             _ => return,
         };
-        tracing::error!("Child killed with {status:?}");
-    }
-}
-
-#[derive(Debug, serde::Deserialize)]
-struct Info {
-    #[serde(rename = "child-pid")]
-    child_pid: u32,
-}
-
-impl Info {
-    pub fn from_pipe(rx: &mut File) -> Result<Self, AppError> {
-        let mut reader = BufReader::new(rx);
-        let mut buf = Vec::new();
-        reader
-            .read_until(b'}', &mut buf)
-            .map_err(AppError::PipeIO)?;
-
-        let info = serde_json::from_slice(&buf).map_err(AppError::BwrapInfo)?;
-        Ok(info)
+        tracing::info!("bwrap killed with {status:?}");
     }
 }
