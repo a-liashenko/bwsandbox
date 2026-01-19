@@ -72,7 +72,7 @@ impl<C: Context> Service<C> for Slirp4netns {
         let mut command = Command::new(utils::SLIRP4NETNS_CMD);
         command.args(self.args).arg(pid.to_string());
         command.arg(self.if_name);
-        tracing::trace!("Slirp4netns command: {:?}", command);
+        tracing::info!("Slirp4netns command: {:?}", command);
 
         if self.quiet {
             command.stdout(Stdio::null());
