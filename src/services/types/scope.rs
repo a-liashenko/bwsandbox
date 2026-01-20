@@ -20,7 +20,13 @@ impl Scope {
     }
 
     pub fn merge(&mut self, other: Scope) {
-        self.remove.extend(other.remove);
+        if !other.is_empty() {
+            self.remove.extend(other.remove);
+        }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.remove.is_empty()
     }
 
     fn cleanup(self) {
