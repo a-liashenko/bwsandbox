@@ -2,7 +2,7 @@ mod scope;
 mod service;
 
 pub use scope::{Scope, ScopeCleanup};
-pub use service::{Context, HandleOwned, Service};
+pub use service::{Context, HandleOwned, BwrapInfo, Service};
 
 // Allow unused to allow new services define own Handles if needed in the future
 #[allow(unused)]

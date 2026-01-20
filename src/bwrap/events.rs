@@ -15,7 +15,7 @@ pub enum Events {
 impl EventType for Events {}
 
 // Example: { "child-pid": 77360, "cgroup-namespace": 4026534046, "ipc-namespace": 4026534044, "mnt-namespace": 4026534042, "net-namespace": 4026534047, "pid-namespace": 4026534045, "uts-namespace": 4026534043 }
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone, Copy)]
 #[serde(rename_all = "kebab-case")]
 #[allow(unused)] // Keep structure in sync with bwrap events
 pub struct SandboxStatus {

@@ -1,10 +1,18 @@
 use super::scope::Scope;
 use crate::{bwrap::SandboxStatus, error::AppError};
 
+#[derive(Debug)]
+pub struct BwrapInfo {
+    // Allow to keep root bwrap pid for traces and debug
+    #[allow(unused)]
+    pub pid: u32,
+    pub sandbox: SandboxStatus,
+}
+
 pub trait Service<C: Context> {
     fn apply_before(&mut self, ctx: &mut C) -> Result<Scope, AppError>;
     fn apply_after(&mut self, ctx: &mut C) -> Result<Scope, AppError>;
-    fn start(self: Box<Self>, status: &SandboxStatus) -> Result<HandleOwned, AppError>;
+    fn start(self: Box<Self>, status: &BwrapInfo) -> Result<HandleOwned, AppError>;
 }
 
 pub trait Context: std::fmt::Debug {

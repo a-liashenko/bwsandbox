@@ -1,6 +1,6 @@
 use crate::bwrap::events::{Events, EventsReader, SandboxStatus};
 use crate::fd::{AsFdArg, SharedPipe};
-use crate::services::{Context, Scope, ScopeCleanup, Service};
+use crate::services::{BwrapInfo, Context, Scope, ScopeCleanup, Service};
 use crate::{error::AppError, utils};
 use std::io::{PipeReader, PipeWriter, Write};
 use std::os::unix::process::ExitStatusExt;
@@ -23,7 +23,11 @@ impl Context for BwrapProcBuilder {
 
 impl BwrapProcBuilder {
     pub fn new(args: Vec<OsString>) -> Result<Self, AppError> {
-        let mut command = Command::new(utils::BWRAP_CMD);
+        // Unshare bwrap so app can have full permissions to all bwrap created namespaces
+        let mut command = Command::new("unshare");
+        command.arg("--user").arg("--map-root-user").arg("--");
+        command.arg(utils::BWRAP_CMD);
+
         // Bind working dir into sandbox, used if service need to create content in sandbox and mount it AFTER sandbox started
         command.arg("--bind");
         command.arg(utils::temp_dir());
@@ -102,8 +106,11 @@ impl BwrapProc {
         })
     }
 
-    pub fn app_status(&self) -> &SandboxStatus {
-        &self.status
+    pub fn bwrap_info(&self) -> BwrapInfo {
+        BwrapInfo {
+            pid: self.proc.id(),
+            sandbox: self.status,
+        }
     }
 
     pub fn wait(mut self) -> Result<ExitStatus, AppError> {

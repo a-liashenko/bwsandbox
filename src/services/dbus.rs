@@ -1,6 +1,5 @@
-use crate::bwrap::SandboxStatus;
 use crate::config::{Cmd, EnvVal, TempFileVal};
-use crate::services::{Context, HandleOwned, Scope, Service};
+use crate::services::{Context, HandleOwned, BwrapInfo, Scope, Service};
 use crate::{error::AppError, utils};
 use serde::Deserialize;
 use std::{
@@ -61,7 +60,7 @@ impl<C: Context> Service<C> for DbusService {
     }
 
     #[tracing::instrument]
-    fn start(mut self: Box<Self>, _: &SandboxStatus) -> Result<HandleOwned, AppError> {
+    fn start(mut self: Box<Self>, _: &BwrapInfo) -> Result<HandleOwned, AppError> {
         const POLL: Duration = Duration::from_millis(100);
         const TOTAL_POLL: Duration = Duration::from_secs(3);
 
