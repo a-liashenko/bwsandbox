@@ -12,7 +12,7 @@ pub struct BwrapInfo {
 pub trait Service<C: Context> {
     fn apply_before(&mut self, ctx: &mut C) -> Result<Scope, AppError>;
     fn apply_after(&mut self, ctx: &mut C) -> Result<Scope, AppError>;
-    fn start(self: Box<Self>, status: &BwrapInfo) -> Result<HandleOwned, AppError>;
+    fn start(self: Box<Self>, status: &BwrapInfo) -> Result<HandleType, AppError>;
 }
 
 pub trait Context: std::fmt::Debug {
@@ -23,10 +23,16 @@ pub trait Handle: std::fmt::Debug {
     fn stop(&mut self) -> Result<(), AppError>;
 }
 
-// Simple placeholder for services without any stop logic
-impl Handle for () {
-    fn stop(&mut self) -> Result<(), AppError> {
-        Ok(())
+pub trait HandleExt<T, E> {
+    fn transpose(self) -> Option<Result<T, E>>;
+}
+
+impl<T, E> HandleExt<T, E> for Result<T, E> {
+    fn transpose(self) -> Option<Result<T, E>> {
+        match self {
+            Ok(v) => Some(Ok(v)),
+            Err(e) => Some(Err(e)),
+        }
     }
 }
 
@@ -50,6 +56,20 @@ impl Handle for std::fs::File {
 impl Handle for Box<dyn Handle> {
     fn stop(&mut self) -> Result<(), AppError> {
         self.as_mut().stop()
+    }
+}
+
+#[derive(Debug)]
+pub enum HandleType {
+    None,
+    Owned { _drop: HandleOwned },
+}
+
+impl HandleType {
+    pub fn new<T: Handle + 'static>(handle: T) -> Self {
+        Self::Owned {
+            _drop: HandleOwned::new(handle),
+        }
     }
 }
 

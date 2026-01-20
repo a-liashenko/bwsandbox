@@ -1,7 +1,7 @@
 use super::config::Config;
 use crate::fd::{AsFdArg, SharedPipe};
 use crate::services::slirp4netns::namespace::Namespace;
-use crate::services::{BwrapInfo, Context, HandleOwned, Scope, Service};
+use crate::services::{BwrapInfo, Context, HandleType, Scope, Service};
 use crate::{error::AppError, utils};
 use std::io::Read;
 use std::os::unix::process::CommandExt;
@@ -92,7 +92,7 @@ impl<C: Context> Service<C> for Slirp4netns {
         Ok(scope)
     }
 
-    fn start(mut self: Box<Self>, status: &BwrapInfo) -> Result<HandleOwned, AppError> {
+    fn start(mut self: Box<Self>, status: &BwrapInfo) -> Result<HandleType, AppError> {
         use std::io::ErrorKind;
 
         self.command
@@ -113,7 +113,7 @@ impl<C: Context> Service<C> for Slirp4netns {
         if bytes == 0 {
             AppError::io("slirp4netns ready read")(ErrorKind::UnexpectedEof.into()).into_err()
         } else {
-            Ok(HandleOwned::new(child))
+            Ok(HandleType::new(child))
         }
     }
 }

@@ -1,4 +1,4 @@
-use crate::{bwrap::BwrapProcBuilder, error::AppError, utils};
+use crate::{bwrap::BwrapProcBuilder, error::AppError, services::HandleExt, utils};
 pub use args::Args;
 use std::process::ExitStatus;
 
@@ -29,7 +29,7 @@ impl App {
         tracing::trace!("bwrap info {proc_status:?}");
         let _handles = services
             .into_iter()
-            .map(|v| v.start(&proc_status))
+            .filter_map(|v| v.start(&proc_status).transpose())
             .collect::<Result<Vec<_>, _>>()?;
 
         let status = proc.wait()?;

@@ -1,6 +1,6 @@
 use crate::error::AppError;
 use crate::fd::AsFdExtra;
-use crate::services::{Context, HandleOwned, BwrapInfo, Scope, Service};
+use crate::services::{BwrapInfo, Context, HandleType, Scope, Service};
 use anyhow::Context as _;
 use std::io::Seek;
 use std::{fs::File, os::fd::AsRawFd};
@@ -64,7 +64,7 @@ impl<C: Context> Service<C> for SeccompService {
     }
 
     #[tracing::instrument]
-    fn start(self: Box<Self>, _: &BwrapInfo) -> Result<HandleOwned, AppError> {
-        Ok(HandleOwned::new(self.fd))
+    fn start(self: Box<Self>, _: &BwrapInfo) -> Result<HandleType, AppError> {
+        Ok(HandleType::None)
     }
 }

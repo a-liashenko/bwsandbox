@@ -1,5 +1,5 @@
 use crate::error::AppError;
-use crate::services::{Context, HandleOwned, BwrapInfo, Scope, Service};
+use crate::services::{BwrapInfo, Context, HandleType, Scope, Service};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize, Default)]
@@ -48,7 +48,7 @@ impl<C: Context> Service<C> for EnvMapper {
         Ok(Scope::new())
     }
 
-    fn start(self: Box<Self>, _: &BwrapInfo) -> Result<HandleOwned, AppError> {
-        Ok(HandleOwned::new(()))
+    fn start(self: Box<Self>, _: &BwrapInfo) -> Result<HandleType, AppError> {
+        Ok(HandleType::None)
     }
 }
