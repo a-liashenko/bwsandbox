@@ -64,9 +64,8 @@ impl<T: AsFd> FdStatus<T> {
 impl<T: AsFd> AsFd for FdStatus<T> {
     fn as_fd(&self) -> std::os::unix::prelude::BorrowedFd<'_> {
         match self {
-            Self::Owned(Some(v)) => v.as_fd(),
-            Self::Shared(v) => v.as_fd(),
-            _ => unreachable!(),
+            Self::Owned(Some(v)) | Self::Shared(v) => v.as_fd(),
+            Self::Owned(None) => unreachable!(),
         }
     }
 }
