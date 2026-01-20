@@ -46,6 +46,29 @@ impl Slirp4netns {
             if_name: config.if_name,
         })
     }
+
+    fn fix_ns(&mut self, pid: u32) -> Result<(), AppError> {
+        use std::io::ErrorKind;
+
+        // If --dev used in bwrap it will create intermediate ns
+        // And to avoid setns(CLONE_NEWNET): Operation not permitted we need enter intermediate ns
+        // If --dev not used, parent ns will be our process ns
+        let own_ns = Namespace::open_pid(std::process::id())?;
+        let bw_pns = Namespace::open_pid(pid)?.parent()?;
+
+        let dev_used = own_ns.fd_inode()? != bw_pns.fd_inode()?;
+        if dev_used {
+            self.command.arg("--userns-path=/proc/self/ns/user");
+            unsafe {
+                self.command.pre_exec(move || {
+                    let result = bw_pns.enter();
+                    tracing::trace!("pre_exec status {result:?}");
+                    result.map_err(|_| ErrorKind::Other.into())
+                })
+            };
+        }
+        Ok(())
+    }
 }
 
 impl<C: Context> Service<C> for Slirp4netns {
@@ -74,18 +97,10 @@ impl<C: Context> Service<C> for Slirp4netns {
 
         self.command
             .arg(status.sandbox.child_pid.to_string())
-            .arg(self.if_name);
+            .arg(&self.if_name);
         tracing::info!("Slirp4netns command: {:?}", self.command);
 
-        let bw_pns = Namespace::open_pid(status.sandbox.child_pid)?.parent()?;
-        unsafe {
-            self.command.pre_exec(move || {
-                let result = bw_pns.enter();
-                tracing::trace!("pre_exec status {result:?}");
-                result.map_err(|_| ErrorKind::Other.into())
-            });
-        }
-
+        self.fix_ns(status.sandbox.child_pid)?;
         let child = self
             .command
             .spawn()

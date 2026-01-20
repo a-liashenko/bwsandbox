@@ -24,9 +24,7 @@ impl Context for BwrapProcBuilder {
 impl BwrapProcBuilder {
     pub fn new(args: Vec<OsString>) -> Result<Self, AppError> {
         // Unshare bwrap so app can have full permissions to all bwrap created namespaces
-        let mut command = Command::new("unshare");
-        command.arg("--user").arg("--map-root-user").arg("--");
-        command.arg(utils::BWRAP_CMD);
+        let mut command = Command::new(utils::BWRAP_CMD);
 
         // Bind working dir into sandbox, used if service need to create content in sandbox and mount it AFTER sandbox started
         command.arg("--bind");
