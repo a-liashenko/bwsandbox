@@ -12,7 +12,7 @@ missing_errors_doc = "allow"
 anyhow = { version = "1.0", default-features = false, features = ["std"] }
 minijinja = { version = "2.12", default-features = false, features = ["multi_template", "serde", "loader"] }
 nanoid = { version = "0.4", default-features = false }
-rustix = { version = "1.1", features = ["pipe"], default-features = false }
+rustix = { version = "1.1", features = ["thread"], default-features = false }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
 shellexpand = { version = "3.1", default-features = false, features = ["base-0"] }
 shlex = { version = "1.3", default-features = false, features = ["std"] }
@@ -22,8 +22,9 @@ toml = { version = "0.9", default-features = false, features = ["std", "serde", 
 tracing = { version = "0.1", default-features = false, features = ["std", "attributes"] }
 lexopt = { version = "0.3", default-features = false }
 tracing-subscriber = { version = "0.3", default-features = false, features = ["ansi", "env-filter", "fmt", "registry"] }
-ctrlc = { version = "3.5.0", default-features = false, features = ["termination"] }
+ctrlc = { version = "3.5", default-features = false, features = ["termination"] }
 serde_json = { version = "1.0", default-features = false, features = ["std"] }
+linux-raw-sys = { version = "0.12", default-features = false, features = ["ioctl"] }
 
 [dev-dependencies]
 toml = { version = "*", default-features = false, features = ["std", "serde", "parse", "display"] }
