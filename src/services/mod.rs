@@ -4,7 +4,8 @@ pub use types::*;
 mod dbus;
 mod env_mapper;
 mod seccomp;
-mod slirp4netns;
+
+pub mod slirp4netns;
 
 use crate::error::AppError;
 use serde::de::DeserializeOwned;
