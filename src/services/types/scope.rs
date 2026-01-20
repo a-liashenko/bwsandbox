@@ -66,11 +66,11 @@ fn destroy_scopes(scopes: &Arc<Mutex<Vec<Scope>>>) {
     let scopes = match scopes {
         Ok(v) if v.is_empty() => {
             tracing::warn!("Scopes already cleaned?");
-            return;
+            std::process::exit(-1);
         }
         Err(e) => {
             tracing::error!("Scopes mutex poisoned: {e:?}");
-            return;
+            std::process::exit(-1);
         }
         Ok(v) => v,
     };
