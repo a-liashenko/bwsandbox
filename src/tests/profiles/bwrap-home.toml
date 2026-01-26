@@ -1,0 +1,10 @@
+[bwrap]
+inline = [
+    # 
+    { type = "str", value = "--tmpfs" },
+    { type = "str", value = "/home" },
+]
+
+[bwrap.template]
+name = "base.j2"
+dir = "./profiles/templates"

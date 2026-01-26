@@ -1,0 +1,8 @@
+[bwrap.template]
+name = "base.j2"
+dir = "./profiles/templates"
+
+[env_mapper]
+type = 'inline'
+unset_all = true
+keep = ['BWRAP_TEST']

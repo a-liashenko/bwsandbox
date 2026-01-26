@@ -1,0 +1,3 @@
+[bwrap.template]
+name = "base.j2"
+dir = "./profiles/templates"

@@ -1,0 +1,12 @@
+{# Security #}
+--unshare-all
+--share-net
+--new-session
+--die-with-parent
+--cap-drop all
+
+{# base system #}
+--proc /proc
+--tmpfs /tmp
+--ro-bind /usr /usr
+--symlink usr/lib /lib64

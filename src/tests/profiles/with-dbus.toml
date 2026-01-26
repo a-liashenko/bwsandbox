@@ -1,0 +1,14 @@
+[bwrap.template]
+name = "base.j2"
+dir = "./profiles/templates"
+
+[dbus]
+type = "inline"
+user_bus = "$DBUS_SESSION_BUS_ADDRESS"
+proxy_bus = "dbus-proxy"
+sandboxed_bus = "$XDG_RUNTIME_DIR/bus"
+inline = [
+    #
+    { type = "str", value = "--filter" },
+    { type = "str", value = "--talk=org.freedesktop.DBus" },
+]

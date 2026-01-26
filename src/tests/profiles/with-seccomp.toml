@@ -1,0 +1,12 @@
+[bwrap.template]
+name = "base.j2"
+dir = "./profiles/templates"
+
+[seccomp]
+type = 'inline'
+default_action = "SCMP_ACT_ALLOW"
+extra_arch = []
+
+[[seccomp.rules]]
+action = "SCMP_ACT_ERRNO"
+syscalls = ["getdents64"]

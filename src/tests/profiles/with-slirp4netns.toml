@@ -1,0 +1,12 @@
+[bwrap.template]
+name = "base.j2"
+dir = "./profiles/templates"
+
+[slirp4netns]
+type = "inline"
+resolv_conf = "nameserver 10.0.2.3"
+inline = [
+    { type = "str", value = "--configure" },
+    { type = "str", value = "--mtu=65520" },
+    { type = "str", value = "--disable-host-loopback" },
+]
