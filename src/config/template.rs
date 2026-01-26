@@ -8,6 +8,7 @@ use std::{collections::BTreeMap, path::PathBuf};
 pub struct Template {
     pub name: EnvVal<String>,
     pub dir: EnvVal<PathBuf>,
+    #[serde(default)]
     pub context: BTreeMap<String, ArgVal>,
 }
 
