@@ -1,15 +1,11 @@
-# Bind user GAMES_RT to sandboxed user
---bind  {{SANDBOXED_HOME}} {{DST_HOME}}
+{# Bind user sandbox to sandboxed user #}
+--bind {{SANDBOXED_HOME}} {{DST_HOME}}
 --chdir {{DST_HOME}}
 
-# Shared utils dir
---ro-bind /opt /opt
+{# Shared utils dir #}
+--ro-bind-try /opt /opt
 
-# Shared games dirs
---bind-try /mnt/shared/games       /mnt/shared/games
---bind-try /mnt/generic-data/games /mnt/generic-data/games
-
-# Extra env vars for proton and AMD
+{# Extra env vars for proton and AMD #}
 --setenv PROTON_NO_WM_DECORATION 1
 --setenv PROTON_USE_NTSYNC 1
 --setenv PROTON_FSR4_UPGRADE 1
@@ -24,6 +20,12 @@
 
 --setenv MALLOC_ARENA_MAX 2
 --setenv WINE_LARGE_ADDRESS_AWARE 1
+
+{# Enable MANGOHUD by default #}
+--setenv MANGOHUD 1
+
+{# Avoid provided dbus global access to system settings #}
+--setenv GSETTINGS_BACKEND keyfile
 
 {% include 'base.j2' %}
 {% include 'user.j2' %}

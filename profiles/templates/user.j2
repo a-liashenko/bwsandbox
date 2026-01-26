@@ -1,21 +1,22 @@
-# User (my) base config files for sandbox
---ro-bind-try {{SRC_HOME}}/.config/helix      {{DST_HOME}}/.config/helix
---ro-bind-try {{SRC_HOME}}/.config/gtk-3.0    {{DST_HOME}}/.config/gtk-3.0
---ro-bind-try {{SRC_HOME}}/.config/gtk-4.0    {{DST_HOME}}/.config/gtk-4.0
---ro-bind-try {{SRC_HOME}}/.config/alacritty  {{DST_HOME}}/.config/alacritty
---ro-bind-try {{SRC_HOME}}/.config/fish       {{DST_HOME}}/.config/fish
+{# User (my) base config files for sandbox #}
+--ro-bind-try {{SRC_HOME}}/.config/helix {{DST_HOME}}/.config/helix
+--ro-bind-try {{SRC_HOME}}/.config/gtk-3.0 {{DST_HOME}}/.config/gtk-3.0
+--ro-bind-try {{SRC_HOME}}/.config/gtk-4.0 {{DST_HOME}}/.config/gtk-4.0
+--ro-bind-try {{SRC_HOME}}/.config/alacritty {{DST_HOME}}/.config/alacritty
 --ro-bind-try {{SRC_HOME}}/.config/fontconfig {{DST_HOME}}/.config/fontconfig
---ro-bind-try {{SRC_HOME}}/.config/MangoHud   {{DST_HOME}}/.config/MangoHud
+--ro-bind-try {{SRC_HOME}}/.config/fish/config_sandbox.fish {{DST_HOME}}/.config/fish/config.fish
+
+--bind-try {{SRC_HOME}}/.config/MangoHud {{DST_HOME}}/.config/MangoHud
 
 --ro-bind-try {{SRC_HOME}}/.local/share/themes {{DST_HOME}}/.local/share/themes
---ro-bind-try {{SRC_HOME}}/.local/share/icons  {{DST_HOME}}/.local/share/icons
+--ro-bind-try {{SRC_HOME}}/.local/share/icons {{DST_HOME}}/.local/share/icons
 
-# User XDG resources
---bind-try {{SRC_XDG_RUNTIME_DIR}}/pulse           {{DST_XDG_RUNTIME_DIR}}/pulse
---bind-try {{SRC_XDG_RUNTIME_DIR}}/pipewire-0      {{DST_XDG_RUNTIME_DIR}}/pipewire-0
+{# User XDG resources #}
+--bind-try {{SRC_XDG_RUNTIME_DIR}}/pulse {{DST_XDG_RUNTIME_DIR}}/pulse
+--bind-try {{SRC_XDG_RUNTIME_DIR}}/pipewire-0 {{DST_XDG_RUNTIME_DIR}}/pipewire-0
 --bind-try {{SRC_XDG_RUNTIME_DIR}}/pipewire-0.lock {{DST_XDG_RUNTIME_DIR}}/pipewire-0.lock
 
 {% if WAYLAND_DISPLAY is defined %}
---bind {{SRC_XDG_RUNTIME_DIR}}/{{WAYLAND_DISPLAY}}       {{DST_XDG_RUNTIME_DIR}}/{{WAYLAND_DISPLAY}}
---bind {{SRC_XDG_RUNTIME_DIR}}/{{WAYLAND_DISPLAY}}.lock  {{DST_XDG_RUNTIME_DIR}}/{{WAYLAND_DISPLAY}}.lock
+--bind {{SRC_XDG_RUNTIME_DIR}}/{{WAYLAND_DISPLAY}} {{DST_XDG_RUNTIME_DIR}}/{{WAYLAND_DISPLAY}}
+--bind {{SRC_XDG_RUNTIME_DIR}}/{{WAYLAND_DISPLAY}}.lock {{DST_XDG_RUNTIME_DIR}}/{{WAYLAND_DISPLAY}}.lock
 {% endif %}

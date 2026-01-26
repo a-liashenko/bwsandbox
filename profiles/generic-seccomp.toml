@@ -1,14 +1,10 @@
-
-# required
 default_action = "SCMP_ACT_ALLOW"
-# required, can be empty
+# Used by steam
 extra_arch = ["x86"]
 
 # Stolen from https://github.com/igo95862/bubblejail
 [[rules]]
-# required
 action = "SCMP_ACT_ERRNO"
-# required
 syscalls = [
     "bdflush",
     "io_pgetevents",
@@ -65,7 +61,8 @@ syscalls = [
 [[rules]]
 action = "SCMP_ACT_ERRNO"
 syscalls = [
-    "ptrace",
+    # Easy anticheat required
+    # "ptrace",
     # Steam crash without these syscalls
     # "mount",
     # "umount2",

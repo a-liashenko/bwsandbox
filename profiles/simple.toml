@@ -1,21 +1,21 @@
 # Simple config
 
 # Get lsb release from sandbox
-# cargo run -- -f ./example/simple.toml -- cat /etc/os-release
+# cargo run -- -f ./profiles/simple.toml -- cat /etc/os-release
 
 # Get os release from sandbox
-# cargo run -- -f ./example/simple.toml -- cat /etc/lsb-release
+# cargo run -- -f ./profiles/simple.toml -- cat /etc/lsb-release
 
 # Example seccomp filter, ls will return error if enabled
 # Comment [seccomp] section to disable seccomp restrictions
-# cargo run -- -f ./example/simple.toml -- ls /etc
+# cargo run -- -f ./profiles/simple.toml -- ls /etc
 
 # Example dbus filter, only org.freedesktop.DBus allowed
 # Comment [dbus] section to disabled dbus proxy
-# cargo run -- -f ./example/simple.toml -- dbus-send --type=method_call --print-reply --dest=org.freedesktop.DBus / org.freedesktop.DBus.ListNames
+# cargo run -- -f ./profiles/simple.toml -- dbus-send --type=method_call --print-reply --dest=org.freedesktop.DBus / org.freedesktop.DBus.ListNames
 
 # Example env filter, SANDBOX_HELLO var will be present in sandbox because env_mapper executed BEFORE bwrap args
-# cargo run -- -f ./example/simple.toml -- env
+# cargo run -- -f ./profiles/simple.toml -- env
 
 # Required
 [bwrap]
@@ -38,7 +38,7 @@ inline = [
 # Bind /etc/lsb-release and /etc/os-release into sandbox
 name = "simple.j2"
 # Required, template dir
-dir = "./example"
+dir = "./profiles/templates"
 
 # Required
 [bwrap.template.context]
@@ -51,7 +51,7 @@ lsb = { type = "str", value = "/etc/lsb-release" }
 # Required, can be 'include' or 'inline'
 type = "include"
 # Required if type 'include'
-include = "./example/simple-seccomp.toml"
+include = "./profiles/simple-seccomp.toml"
 
 
 # Optional, uncomment to filter dbus calls

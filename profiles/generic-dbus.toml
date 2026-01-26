@@ -3,6 +3,8 @@ proxy_bus = "dbus-proxy"
 sandboxed_bus = "$XDG_RUNTIME_DIR/bus"
 
 inline = [
+    # Uncomment to find which one dbus service is missing
+    # { type = "str", value = "--log" },
     { type = "str", value = "--filter" },
 
     { type = "str", value = "--talk=org.freedesktop.DBus" },

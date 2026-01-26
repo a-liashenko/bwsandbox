@@ -7,15 +7,19 @@ type = "include"
 include = "$XDG_CONFIG_HOME/bwsandbox/generic-dbus.toml"
 
 [env_mapper]
-type = 'include'
+type = "include"
 include = "$XDG_CONFIG_HOME/bwsandbox/generic-env.toml"
+
+[slirp4netns]
+type = "include"
+include = "$XDG_CONFIG_HOME/bwsandbox/generic-slirp4netns.toml"
 
 [bwrap.template]
 name = "generic.j2"
 dir = "$XDG_CONFIG_HOME/bwsandbox/templates"
 
 [bwrap.template.context]
-SANDBOXED_HOME = { type = "env", value = "$HOME/games-rt" }
+SANDBOXED_HOME = { type = "env", value = "$HOME/sandbox/games" }
 
 SRC_HOME = { type = "env", value = "$HOME" }
 DST_HOME = { type = "env", value = "$HOME" }

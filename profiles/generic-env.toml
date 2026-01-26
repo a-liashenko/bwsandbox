@@ -1,6 +1,7 @@
 unset_all = true
 keep = [
     'APPIMAGE_EXTRACT_AND_RUN',
+    'APPIMAGE_EXTRACT_DIR',
 
     'USER',
     'HOME',
