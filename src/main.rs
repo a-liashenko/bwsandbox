@@ -10,11 +10,16 @@ mod services;
 mod temp_dir;
 mod utils;
 
+#[cfg(test)]
+mod tests;
+
 fn main() -> ExitCode {
+    // If NO_COLOR not set or invalid => enable colors
+    let no_color = std::env::var("NO_COLOR").is_ok();
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::fmt::layer()
-                .with_ansi(true)
+                .with_ansi(!no_color)
                 .with_level(true)
                 .with_file(true)
                 .with_line_number(true)
@@ -28,8 +33,7 @@ fn main() -> ExitCode {
         Ok(v) => v,
         Err(e) => {
             print_error(&e);
-            print_help();
-            return ExitCode::FAILURE;
+            return print_help();
         }
     };
 
