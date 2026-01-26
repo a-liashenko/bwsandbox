@@ -49,7 +49,7 @@ inline = [
 [bwrap.template]
 # Jinja template name
 name = "new_profile.j2"
-# Dire where template and all includes saved
+# Dir where template and all includes saved
 dir = "/path/to/templates"
 
 [bwrap.template.context]
@@ -71,7 +71,7 @@ Extra args added to bwrap:
 Extra args added to bwrap:  
 `--seccomp <fd>` - pass bpf filter fd to bwrap
 
-**env_mapper** - simple helper to clean and bypass env variables into sandbox
+**env_mapper** - simple helper to clean and bypass env variables into sandbox  
 Extra args added to bwrap:  
 `--clearenv` - unset all env variables  
 `--setenv` - copy host variable into sandbox  
