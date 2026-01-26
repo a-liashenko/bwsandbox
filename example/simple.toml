@@ -19,9 +19,6 @@
 
 # Required
 [bwrap]
-# Optional, default bwrap
-# bin = "bwrap"
-
 # Optional, inline and/or template should be used
 inline = [
     # Bind host /usr as read-only /usr in sandbox
@@ -59,9 +56,6 @@ include = "./example/simple-seccomp.toml"
 
 # Optional, uncomment to filter dbus calls
 [dbus]
-# Optional
-# bin = "xdg-dbus-proxy"
-
 # Required, can be 'include' or 'inline'
 type = "inline"
 
@@ -93,3 +87,17 @@ keep = ["USER", "HOME"]
 # Optional, default empty
 # Applied AFTER keep envs, will remove any variable set in keep section
 unset = ["USER"]
+
+[slirp4netns]
+# Options, same as bwrap -- 'inline' or 'template' can be used
+type = 'inline'
+# Extra content of /etc/resolv.conf if needed
+resolv_conf = "nameserver 10.0.2.3"
+# Extra flag to supress any output from slirt4netns, even if success it still writes something int stdout and stderr, default true
+# quiet = true
+inline = [
+    # 
+    { type = "str", value = "--configure" },
+    { type = "str", value = "--disable-host-loopback" },
+    { type = "str", value = "--mtu=65520" },
+]
