@@ -6,7 +6,9 @@
 --cap-drop all
 
 {# base system #}
---proc /proc
+{# Disabled for rootless podman compatibility #}
+{# --proc /proc #}
 --tmpfs /tmp
 --ro-bind /usr /usr
---symlink usr/lib /lib64
+--ro-bind /lib /lib
+--ro-bind /lib64 /lib64
