@@ -26,9 +26,12 @@ inline = [
     { type = "str", value = "/usr" },
     { type = "str", value = "/usr" },
 
-    # Symlink /usr/lib as /usr/lib64
-    { type = "str", value = "--symlink" },
-    { type = "str", value = "usr/lib" },
+    { type = "str", value = "--ro-bind" },
+    { type = "str", value = "/lib" },
+    { type = "str", value = "/lib" },
+
+    { type = "str", value = "--ro-bind" },
+    { type = "str", value = "/lib64" },
     { type = "str", value = "/lib64" },
 ]
 
