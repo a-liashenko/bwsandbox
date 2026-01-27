@@ -1,0 +1,33 @@
+name: Rust quick tests
+
+on:
+  workflow_call: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: rust:latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies and clippy
+        run: |
+          apt-get update
+          apt-get install -y libseccomp-dev dbus xdg-dbus-proxy slirp4netns bubblewrap
+          rustup component add clippy
+      - name: Build
+        run: cargo build --verbose
+      - name: Lint
+        run: cargo clippy -- -D warnings
+      - name: Run tests
+        run: |
+          # Add fake USER for unit tests
+          export USER=test_user
+
+          # Configure dbus for xdg-dbus-proxy support test
+          export XDG_RUNTIME_DIR="/run/user/$(id -u)"
+          export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
+          mkdir -p $XDG_RUNTIME_DIR
+          dbus-daemon --session --address="$DBUS_SESSION_BUS_ADDRESS" --fork
+
+          # TODO: Add slirp4netns tests, for now it seems too hard to forward /dev/net/tun in gh actions
+          cargo test --verbose -- --no-capture --skip test_slirp4netns_external --skip test_slirp4netns_internal

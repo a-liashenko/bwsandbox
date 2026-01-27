@@ -1,0 +1,46 @@
+name: Rust Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+env:
+  TAG: ${{ github.ref_name }}
+  BINARY_NAME: bwsandbox
+  BINARY_TAGGED: bwsandbox-${{ github.ref_name }}
+
+jobs:
+  run_tests:
+    uses: ./.github/workflows/rust-tests.yml
+
+  release:
+    needs: run_tests
+    runs-on: ubuntu-latest
+    container: rust:latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y libseccomp-dev
+
+      - name: Build release binary
+        run: cargo build --release
+
+      - name: Generate SHA256 checksum && tag binary
+        run: |
+          cp target/release/$BINARY_NAME target/release/$BINARY_TAGGED
+          sha256sum target/release/$BINARY_TAGGED > target/release/$BINARY_TAGGED.sha256
+          cat target/release/$BINARY_TAGGED.sha256
+
+      - name: Upload release binary
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            target/release/$BINARY_TAGGED
+            target/release/$BINARY_TAGGED.sha256
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
