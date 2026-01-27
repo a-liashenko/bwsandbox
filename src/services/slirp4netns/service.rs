@@ -27,9 +27,6 @@ impl Slirp4netns {
             command.stderr(Stdio::null());
         }
 
-        let mut ready = SharedPipe::new()?;
-        command.arg("--ready-fd").arg_fd(ready.share_tx()?)?;
-
         let resolv_conf = match config.resolv_conf {
             Some(v) => {
                 let file = utils::temp_dir().join("slirp4netns_resolv.conf");
@@ -38,6 +35,8 @@ impl Slirp4netns {
             }
             None => None,
         };
+
+        let ready = SharedPipe::new()?;
 
         Ok(Self {
             command,
@@ -96,6 +95,8 @@ impl<C: Context> Service<C> for Slirp4netns {
         use std::io::ErrorKind;
 
         self.command
+            .arg("--ready-fd")
+            .arg_fd(self.ready.share_tx()?)?
             .arg(status.sandbox.child_pid.to_string())
             .arg(&self.if_name);
         tracing::info!("Slirp4netns command: {:?}", self.command);

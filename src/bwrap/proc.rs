@@ -31,13 +31,8 @@ impl BwrapProcBuilder {
         command.arg(utils::temp_dir());
         command.arg(utils::temp_dir());
 
-        // Block bwrap until all services ready and operational
-        let mut ready = SharedPipe::new()?;
-        command.arg("--block-fd").arg_fd(ready.share_rx()?)?;
-
-        // Read bwrap events
-        let mut info = SharedPipe::new()?;
-        command.arg("--json-status-fd").arg_fd(info.share_tx()?)?;
+        let ready = SharedPipe::new()?;
+        let info = SharedPipe::new()?;
 
         Ok(Self {
             args,
@@ -67,6 +62,15 @@ impl BwrapProcBuilder {
     }
 
     pub fn spawn(mut self, app: OsString, args: Vec<OsString>) -> Result<BwrapProc, AppError> {
+        // Configure lifecycle tracking fds
+        self.command
+            .arg("--block-fd")
+            .arg_fd(self.ready.share_rx()?)?;
+
+        self.command
+            .arg("--json-status-fd")
+            .arg_fd(self.info.share_tx()?)?;
+
         self.command.arg(app).args(args);
         tracing::info!("Bwrap command: {:?}", self.command);
 
