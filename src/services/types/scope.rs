@@ -4,6 +4,8 @@ use std::sync::{Arc, Mutex};
 
 use crate::error::AppError;
 
+type SharedScopes = Arc<Mutex<Option<Vec<Scope>>>>;
+
 #[derive(Debug, Default)]
 pub struct Scope {
     pub remove: BTreeSet<PathBuf>,
@@ -41,12 +43,12 @@ impl Scope {
 
 #[derive(Debug)]
 pub struct ScopeCleanup {
-    scopes: Arc<Mutex<Vec<Scope>>>,
+    scopes: SharedScopes,
 }
 
 impl ScopeCleanup {
     pub fn new(scopes: Vec<Scope>) -> Result<Self, AppError> {
-        let scopes = Arc::new(Mutex::new(scopes));
+        let scopes = Arc::new(Mutex::new(Some(scopes)));
 
         let scopes_arc = Arc::clone(&scopes);
         let sig_handle = move || {
@@ -67,18 +69,18 @@ impl Drop for ScopeCleanup {
 }
 
 #[tracing::instrument]
-fn destroy_scopes(scopes: &Arc<Mutex<Vec<Scope>>>) {
-    let scopes = scopes.lock().map(|mut v| std::mem::take(&mut *v));
+fn destroy_scopes(scopes: &SharedScopes) {
+    let scopes = scopes.lock().map(|mut v| v.take());
     let scopes = match scopes {
-        Ok(v) if v.is_empty() => {
-            tracing::warn!("Scopes already cleaned?");
+        Ok(Some(v)) => v,
+        Ok(None) => {
+            tracing::warn!("Scopes already cleaned? Signal/exit data race?");
             std::process::exit(-1);
         }
         Err(e) => {
             tracing::error!("Scopes mutex poisoned: {e:?}");
             std::process::exit(-1);
         }
-        Ok(v) => v,
     };
 
     scopes.into_iter().for_each(Scope::cleanup);
