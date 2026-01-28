@@ -52,4 +52,9 @@ jobs:
           ref: refs/pull/${{ inputs.pr_number }}/head
 
       - name: Run tests (including slirp4netns and etc)
-        run: cargo test --release
+        run: |
+          # Configure dbus for xdg-dbus-proxy support test
+          export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus-$RANDOM"
+          dbus-daemon --session --address="$DBUS_SESSION_BUS_ADDRESS" --fork
+
+          cargo test --release
