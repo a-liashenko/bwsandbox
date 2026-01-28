@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       pr_number:
-        description: "Pull Request number"
+        description: "PR num"
         required: false
         type: string
       branch_name:
@@ -14,11 +14,11 @@ on:
 
 jobs:
   build-checks:
-    name: Build checks, audit and linting
+    name: Check, audit && linting
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Checkout PR
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           ref: ${{ inputs.pr_number && format('refs/pull/{0}/head', inputs.pr_number) || inputs.branch_name || github.ref }}
@@ -45,7 +45,7 @@ jobs:
 
   # Run tests on self-hosted runner to have access to slirp4netns, bwrap and etc
   full-tests:
-    name: Build and Test (Self-hosted VPS)
+    name: Tests
     runs-on: [self-hosted, Linux, vps-03]
     timeout-minutes: 30
     needs: build-checks
