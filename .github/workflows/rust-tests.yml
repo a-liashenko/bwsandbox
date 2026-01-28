@@ -51,8 +51,5 @@ jobs:
         with:
           ref: refs/pull/${{ inputs.pr_number }}/head
 
-      - name: Build
-        run: cargo build --release
-
       - name: Run tests (including slirp4netns and etc)
         run: cargo test --release
