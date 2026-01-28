@@ -4,8 +4,12 @@ on:
   workflow_dispatch:
     inputs:
       pr_number:
-        description: "Pull Request number to test"
-        required: true
+        description: "Pull Request number"
+        required: false
+        type: string
+      branch_name:
+        description: "Branch name"
+        required: false
         type: string
 
 jobs:
@@ -17,7 +21,7 @@ jobs:
       - name: Checkout PR
         uses: actions/checkout@v4
         with:
-          ref: refs/pull/${{ inputs.pr_number }}/head
+          ref: ${{ inputs.pr_number && format('refs/pull/{0}/head', inputs.pr_number) || inputs.branch_name || github.ref }}
 
       - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install -y libseccomp-dev
@@ -49,7 +53,7 @@ jobs:
       - name: Checkout PR
         uses: actions/checkout@v4
         with:
-          ref: refs/pull/${{ inputs.pr_number }}/head
+          ref: ${{ inputs.pr_number && format('refs/pull/{0}/head', inputs.pr_number) || inputs.branch_name || github.ref }}
 
       - name: Run tests (including slirp4netns and etc)
         run: cargo test --release
