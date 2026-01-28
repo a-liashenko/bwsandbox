@@ -1,33 +1,58 @@
-name: Rust quick tests
+name: Rust tests
 
 on:
-  workflow_call: {}
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "Pull Request number to test"
+        required: true
+        type: string
 
 jobs:
-  build:
+  build-checks:
+    name: Build checks, audit and linting
     runs-on: ubuntu-latest
-    container: rust:latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - name: Install dependencies and clippy
-        run: |
-          apt-get update
-          apt-get install -y libseccomp-dev dbus xdg-dbus-proxy slirp4netns bubblewrap
-          rustup component add clippy
+      - name: Checkout PR
+        uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ inputs.pr_number }}/head
+
+      - name: Install dependencies
+        run: apt-get update && apt-get install -y libseccomp-dev
+
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          components: clippy
+
+      - name: Cargo check
+        run: cargo check --all-features
+
+      - name: Cargo clippy
+        run: cargo clippy --all-features
+
+      - name: Cargo audit
+        uses: rustsec/audit-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  # Run tests on self-hosted runner to have access to slirp4netns, bwrap and etc
+  full-tests:
+    name: Build and Test (Self-hosted VPS)
+    runs-on: [self-hosted, Linux, vps-03]
+    timeout-minutes: 30
+    needs: build-checks
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ inputs.pr_number }}/head
+
       - name: Build
-        run: cargo build --verbose
-      - name: Lint
-        run: cargo clippy -- -D warnings
-      - name: Run tests
-        run: |
-          # Add fake USER for unit tests
-          export USER=test_user
+        run: cargo build --release
 
-          # Configure dbus for xdg-dbus-proxy support test
-          export XDG_RUNTIME_DIR="/run/user/$(id -u)"
-          export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
-          mkdir -p $XDG_RUNTIME_DIR
-          dbus-daemon --session --address="$DBUS_SESSION_BUS_ADDRESS" --fork
-
-          # TODO: Add slirp4netns tests, for now it seems too hard to forward /dev/net/tun in gh actions
-          cargo test --verbose -- --no-capture --skip test_slirp4netns_external --skip test_slirp4netns_internal
+      - name: Run tests (including slirp4netns and etc)
+        run: cargo test --release
