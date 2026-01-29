@@ -40,7 +40,7 @@ impl SeccompService {
         let mut fd = tempfile::tempfile().map_err(AppError::FileTempAlloc)?;
         filter
             .export_bpf(&mut fd)
-            .context("Failed to export compilled seccomp filter")
+            .context("Failed to export compiled seccomp filter")
             .map_err(AppError::SeccompLib)?;
 
         fd.share_with_children()?;
