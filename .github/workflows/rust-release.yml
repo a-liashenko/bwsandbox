@@ -5,6 +5,9 @@ on:
     tags:
       - "v*"
 
+permissions:
+  contents: write
+
 env:
   TAG: ${{ github.ref_name }}
   BINARY_NAME: bwsandbox
@@ -40,7 +43,5 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            target/release/$BINARY_TAGGED
-            target/release/$BINARY_TAGGED.sha256
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            target/release/${{ env.BINARY_TAGGED }}
+            target/release/${{ env.BINARY_TAGGED }}.sha256
