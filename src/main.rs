@@ -37,12 +37,6 @@ fn main() -> ExitCode {
         }
     };
 
-    // Should work for appimage v2
-    // https://github.com/AppImage/AppImageKit/issues/841
-    if args.is_app_image {
-        unsafe { std::env::set_var("APPIMAGE_EXTRACT_AND_RUN", "1") };
-    }
-
     if let Err(e) = run(args) {
         print_error(&e);
         return ExitCode::FAILURE;
@@ -64,7 +58,11 @@ fn print_error(e: &error::AppError) {
 
 fn print_help() -> ExitCode {
     println!("-----------------");
-    println!("Usage: {} --config-name app -- app --flag", utils::APP_NAME);
+    println!("Usage: {} [--flags] -- app --arg1 arg2", utils::APP_NAME);
+    println!("\t-f, --config-file  <path to profile.toml>");
+    println!("\t-n, --config-name  <profile name in $XDG_CONFIG_PATH/bwsandbox>");
+    println!("\t-a, --config-auto");
+    println!("\t\tWill use <app> as profile name in $XDG_CONFIG_PATH/bwsandbox");
     println!("-----------------");
     ExitCode::SUCCESS
 }
