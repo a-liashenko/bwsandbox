@@ -1,11 +1,13 @@
 pkgname=bwsandbox
-pkgver=1.0.0
+pkgver=0.4.0
 pkgrel=1
-pkgdesc="Simple helper to run applications with seccomp and xdg-dbus-proxy via bubblewrap sandbox"
+pkgdesc="Sandbox utility to orchestrate bwrap and other services configuration"
 arch=('x86_64')
 url="https://github.com/a-liashenko/bwsandbox"
-license=('unknown')
-depends=('bubblewrap' 'libseccomp' 'xdg-dbus-proxy')
+license=('GPL-3.0-or-later')
+depends=('bubblewrap' 'libseccomp')
+optdepends=('xdg-dbus-proxy: D-Bus filtering support'
+            'slirp4netns: Network isolation support')
 makedepends=('rust' 'git')
 source=("git+https://github.com/a-liashenko/bwsandbox.git")
 sha256sums=('SKIP')
