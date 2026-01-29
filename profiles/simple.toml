@@ -96,7 +96,7 @@ unset = ["USER"]
 type = 'inline'
 # Replace content of /etc/resolv.conf with custom settings
 resolv_conf = "nameserver 10.0.2.3"
-# Extra flag to supress any output from slirt4netns, even if success it still writes something in stdout and stderr, default true
+# Extra flag to suppress any output from slirp4netns, even if success it still writes something in stdout and stderr, default true
 # quiet = true
 inline = [
     # 

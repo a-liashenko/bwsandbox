@@ -4,7 +4,7 @@ Profile based orchestrator for [bwrap](https://github.com/containers/bubblewrap)
 
 ### Motivation
 
-The project was born when I was too tired to maintain my bash scripts to keep specific app categories sandboxed. The idea is to keep it a bit more smarter than raw bash script with some batteries like in-place seccomp compilation.  
+The project was born when I was too tired to maintain my bash scripts to keep specific app categories sandboxed. The idea is to keep it a bit smarter than raw bash scripts with some batteries like in-place seccomp compilation.  
 Main goals:
 
 - Keep it as explicit as possible
@@ -37,7 +37,7 @@ More info about arguments: [args.rs](./src/app/args.rs)
 ### Profile structure
 
 Profiles folder has a [simple profile](./profiles/simple.toml) example to understand how profiles are composed and a [generic profile](./profiles/generic.toml) with more complex configuration. More synthetic examples can be found in the [tests](./src/tests/profiles) folder.  
-The new profile consists of a configuration .toml file and .jinja for complex argument composition.
+A new profile consists of a configuration .toml file and .jinja template for complex argument composition.
 
 ```toml
 # new_profile.toml
@@ -68,7 +68,7 @@ fake_home = { type = "str", value = "/opt/fake_home" }
 Extra args added to bwrap:  
 `--block-fd` - delay sandboxed app launch before all services initialized  
 `--json-status-fd` - track bwrap lifecycle  
-`--bind <random_temp_dir>` - temp dir for services to create temp resources (f.e. xdg-dbus-proxy socket)
+`--bind <random_temp_dir>` - temp dir for services to create temp resources (e.g. xdg-dbus-proxy socket)
 
 **seccomp** - compile and export bpf filter  
 Extra args added to bwrap:  
