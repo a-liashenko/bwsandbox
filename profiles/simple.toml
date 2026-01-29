@@ -94,9 +94,9 @@ unset = ["USER"]
 [slirp4netns]
 # Options, same as bwrap -- 'inline' or 'template' can be used
 type = 'inline'
-# Extra content of /etc/resolv.conf if needed
+# Replaced content of /etc/resolv.conf with custom settings
 resolv_conf = "nameserver 10.0.2.3"
-# Extra flag to supress any output from slirt4netns, even if success it still writes something int stdout and stderr, default true
+# Extra flag to supress any output from slirt4netns, even if success it still writes something in stdout and stderr, default true
 # quiet = true
 inline = [
     # 
@@ -104,3 +104,11 @@ inline = [
     { type = "str", value = "--disable-host-loopback" },
     { type = "str", value = "--mtu=65520" },
 ]
+
+# Optional
+# Adds APPIMAGE_EXTRACT_AND_RUN = 1 env variable to sandboxed app
+[appimage]
+type = 'inline'
+
+# Optional, default true
+# extract_and_run = true

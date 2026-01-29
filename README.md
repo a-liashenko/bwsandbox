@@ -22,13 +22,16 @@ I don't want to add a lot of "default" profiles to avoid bloat like Firejail has
 
 ### Usage
 
-There are only 2 arguments:
+```
+bwsandbox [--flags] -- app --arg1 arg2
+    -f, --config-file  <path to profile.toml>
+    -n, --config-name  <profile name in $XDG_CONFIG_PATH/bwsandbox>
+    -a, --config-auto
+        Will use <app> as profile name in $XDG_CONFIG_PATH/bwsandbox
+```
 
-- Select profile (by path, by name, by app name)
-- [AppImage support](https://github.com/AppImage/AppImageKit/issues/841)
-
-Example command:
-`bwsandbox -n generic -- ls -halt`  
+Example command: `bwsandbox -n generic -- ls -halt`  
+App will try to load `$XDG_CONFIG_HOME/bwsandbox/generic.toml` profile and launch `ls -halt` inside bwrap sandbox.  
 More info about arguments: [args.rs](./src/app/args.rs)
 
 ### Profile structure
@@ -63,7 +66,7 @@ fake_home = { type = "str", value = "/opt/fake_home" }
 
 **bwrap** - core of any profile, compose bwrap cli args before launch.  
 Extra args added to bwrap:  
-`--block-fd` - delay sandboxed app launch before all services intialized  
+`--block-fd` - delay sandboxed app launch before all services initialized  
 `--json-status-fd` - track bwrap lifecycle  
 `--bind <random_temp_dir>` - temp dir for services to create temp resources (f.e. xdg-dbus-proxy socket)
 
@@ -83,6 +86,10 @@ Extra args added to bwrap:
 
 **slirp4netns** - host network isolation  
 No extra args, but some magic with namespaces and the bwrap `--dev` flag.
+
+**appimage** - appimage support  
+Extra args added to bwrap:  
+`--setenv` - set [APPIMAGE_EXTRACT_AND_RUN](https://github.com/AppImage/AppImageKit/issues/841) to `1`
 
 ## Acknowledgments
 
