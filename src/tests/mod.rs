@@ -149,3 +149,24 @@ fn test_slirp4netns_internal() {
     assert!(output.stdout_str().is_empty());
     assert!(output.stderr_str().contains("Failed to"));
 }
+
+#[test]
+fn test_app_image() {
+    let mut args = vec![
+        "-f",
+        "<replace me>",
+        "--",
+        "printenv",
+        "APPIMAGE_EXTRACT_AND_RUN",
+    ];
+
+    // Test without appimage service
+    args[1] = "./profiles/bwrap-no-home.toml";
+    let output = cargo_spawn_out(args.clone()).unwrap();
+    assert!(output.stdout_str().is_empty());
+
+    // Test with appimage service
+    args[1] = "./profiles/with-appimage.toml";
+    let output = cargo_spawn_out(args).unwrap();
+    assert_eq!(output.stdout_str(), "1\n");
+}
