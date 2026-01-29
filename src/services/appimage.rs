@@ -16,6 +16,7 @@ fn extract_and_run_default() -> bool {
 
 impl AppImageExtract {
     // Keep consistent across services
+    #[allow(clippy::unnecessary_wraps)]
     pub fn from_config(config: Self) -> Result<Self, AppError> {
         Ok(config)
     }
