@@ -1,6 +1,7 @@
 mod types;
 pub use types::*;
 
+mod appimage;
 mod dbus;
 mod env_mapper;
 mod seccomp;
@@ -20,6 +21,7 @@ pub struct ServicesConfig {
     env_mapper: EntryConfig<env_mapper::EnvMapper>,
     seccomp: EntryConfig<seccomp::Config>,
     slirp4netns: EntryConfig<slirp4netns::Config>,
+    appimage: EntryConfig<appimage::AppImageExtract>,
 }
 
 impl ServicesConfig {
@@ -29,6 +31,7 @@ impl ServicesConfig {
             Self::load_single(self.env_mapper, env_mapper::EnvMapper::from_config)?,
             Self::load_single(self.seccomp, seccomp::SeccompService::from_config)?,
             Self::load_single(self.slirp4netns, slirp4netns::Slirp4netns::from_config)?,
+            Self::load_single(self.appimage, appimage::AppImageExtract::from_config)?,
         ];
 
         let services = services.into_iter().flatten().collect();
