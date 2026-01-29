@@ -9,7 +9,6 @@ pub struct Args {
     pub app: OsString,
     #[allow(clippy::struct_field_names)]
     pub app_args: Vec<OsString>,
-    pub is_app_image: bool,
     pub config: String,
 }
 
@@ -20,12 +19,10 @@ impl Args {
         let mut config: Option<String> = None;
         let mut config_auto = false;
         let mut rest = Vec::new();
-        let mut is_app_image = false;
 
         let mut parser = Parser::from_iter(iter);
         while let Some(arg) = parser.next()? {
             match arg {
-                Long("appimage") => is_app_image = true,
                 Short('f') | Long("config-file") => config = Some(parse_file(&mut parser)?),
                 Short('n') | Long("config-name") => config = Some(parse_name(&mut parser)?),
                 Short('a') | Long("config-auto") => config_auto = true,
@@ -50,7 +47,6 @@ impl Args {
         Ok(Self {
             app: app_name,
             app_args: rest,
-            is_app_image,
             config: config.expect("Config must be ready"),
         })
     }
