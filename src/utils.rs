@@ -21,8 +21,7 @@ pub fn rand_id(len: usize) -> String {
 
 pub fn temp_dir() -> PathBuf {
     std::env::var("XDG_RUNTIME_DIR")
-        .map(PathBuf::from)
-        .unwrap_or(std::env::temp_dir())
+        .map_or(std::env::temp_dir(), PathBuf::from)
         .join(format!("{APP_NAME}-workdir-{}", sandbox_id()))
 }
 
