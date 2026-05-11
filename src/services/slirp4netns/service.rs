@@ -1,7 +1,7 @@
 use super::config::Config;
 use crate::fd::{AsFdArg, SharedPipe};
-use crate::services::slirp4netns::namespace::Namespace;
 use crate::services::{BwrapInfo, Context, HandleType, Scope, Service};
+use crate::system::Namespace;
 use crate::{error::AppError, utils};
 use std::io::Read;
 use std::os::unix::process::CommandExt;

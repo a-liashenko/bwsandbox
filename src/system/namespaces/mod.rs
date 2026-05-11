@@ -1,7 +1,9 @@
 use super::Error;
-use super::ioctl::NsGetParent;
+use ioctl::NsGetParent;
 use rustix::fs::{Mode, OFlags};
 use std::os::fd::{AsRawFd, BorrowedFd, OwnedFd};
+
+mod ioctl;
 
 #[derive(Debug)]
 pub struct Namespace {
