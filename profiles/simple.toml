@@ -33,6 +33,9 @@ inline = [
     { type = "str", value = "--ro-bind" },
     { type = "str", value = "/lib64" },
     { type = "str", value = "/lib64" },
+
+    # { type = "str", value = "--dev" },
+    # { type = "str", value = "/dev" },
 ]
 
 # Optional, inline and/or template should be used
