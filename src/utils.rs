@@ -17,7 +17,7 @@ pub fn sandbox_id() -> &'static str {
 }
 
 pub fn rand_id(len: usize) -> String {
-    nanoid::nanoid!(len)
+    nanoid::nanoid!(len, &nanoid::alphabet::HEX_UPPERCASE)
 }
 
 pub fn temp_dir() -> PathBuf {

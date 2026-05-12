@@ -1,5 +1,5 @@
 mod namespaces;
-pub use namespaces::Namespace;
+pub use namespaces::{Namespace, NamespaceType};
 
 #[allow(clippy::enum_variant_names)]
 #[derive(Debug, thiserror::Error)]

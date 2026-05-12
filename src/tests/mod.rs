@@ -28,6 +28,20 @@ fn test_bwrap() {
 }
 
 #[test]
+fn test_relative_paths_in_config() {
+    let args = vec![
+        "-f",
+        "./profiles/test-relative/profile.toml",
+        "--",
+        "ls",
+        "/home",
+    ];
+    let sandbox = utils::cargo_spawn_out(args).unwrap();
+    assert!(sandbox.status.success());
+    assert!(sandbox.stdout.is_empty());
+}
+
+#[test]
 fn test_seccomp() {
     // Use seccomp to restrict dir listings
     let args = vec!["-f", "./profiles/with-seccomp.toml", "--", "ls", "/"];
@@ -115,6 +129,11 @@ fn test_net_external() {
         "<replace me>",
         "--",
         "curl",
+        "--retry",
+        "10",
+        "--retry-delay",
+        "0.1",
+        "--retry-all-errors",
         "-I",
         "example.com",
     ];
@@ -158,6 +177,9 @@ fn test_net_internal() {
     assert!(output.stderr_str().contains("Failed to"));
 
     // Test with pasta isolation
+    // TODO: Find solution to be sure that pasta fully configured whole net stack
+    // May fail, because pasta don't have any --ready-fd or simillar
+    // Unfortunatelly, --config-net + pasta rules applied a bit late in test
     args[1] = "./profiles/with-pasta.toml";
     let output = cargo_spawn_out(args).unwrap();
     assert!(output.stdout_str().is_empty());

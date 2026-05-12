@@ -1,4 +1,5 @@
 use super::resolv_conf::{ResolvConf, ResolvConfVal};
+use crate::fd::{AsFdArg, SharedPipe};
 use crate::services::{BwrapInfo, Context, HandleType, Scope, Service};
 use crate::{config::Cmd, error::AppError, utils};
 use serde::Deserialize;
@@ -16,6 +17,7 @@ pub struct Config {
 pub struct Pasta {
     command: Command,
     resolv_conf: ResolvConf,
+    with_dev: bool,
 }
 
 impl Pasta {
@@ -31,12 +33,15 @@ impl Pasta {
         Ok(Self {
             command,
             resolv_conf,
+            with_dev: false,
         })
     }
 }
 
 impl<C: Context> Service<C> for Pasta {
-    fn apply_before(&mut self, _: &mut C) -> Result<Scope, AppError> {
+    fn apply_before(&mut self, ctx: &mut C) -> Result<Scope, AppError> {
+        // TODO: Find better solution to avoid datarace, iterating ALL args can be pretty slow and error prone
+        self.with_dev = ctx.arg_exist_before("--dev");
         Ok(Scope::new())
     }
 
@@ -50,13 +55,27 @@ impl<C: Context> Service<C> for Pasta {
     }
 
     fn start(mut self: Box<Self>, info: &BwrapInfo) -> Result<HandleType, AppError> {
-        self.command.arg(info.sandbox.child_pid.to_string());
+        let mut ready = SharedPipe::new()?;
+        let tx = ready.share_tx_dangling()?;
+        self.command.arg("--pid").arg_fd_path(tx)?;
 
-        super::nsfix::fix(&mut self.command, info, "--userns=/proc/self/ns/user")?;
+        let arg = if self.with_dev {
+            super::nsfix::pre_exec_enter_ns(&mut self.command, info)?;
+            format!("--netns=/proc/{}/ns/net", info.sandbox.child_pid)
+        } else {
+            info.sandbox.child_pid.to_string()
+        };
+        self.command.arg(arg);
+
+        tracing::trace!("pasta cmd: {:?}", self.command);
         let child = self
             .command
             .spawn()
             .map_err(AppError::spawn(utils::PASTA_CMD))?;
-        Ok(HandleType::new(child))
+
+        match ready.read::<1>() {
+            Ok(_) => Ok(HandleType::new(child)),
+            Err(e) => Err(AppError::io("Failed to read pasta ready")(e)),
+        }
     }
 }

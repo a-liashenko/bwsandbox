@@ -1,0 +1,14 @@
+{# Security #}
+--unshare-all
+--share-net
+--new-session
+--die-with-parent
+--cap-drop all
+
+{# base system #}
+{# Disabled for rootless podman compatibility #}
+{# --proc /proc #}
+--tmpfs /tmp
+--ro-bind /usr /usr
+--ro-bind /lib /lib
+--ro-bind /lib64 /lib64

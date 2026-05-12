@@ -3,12 +3,12 @@ use crate::fd::{AsFdArg, SharedPipe};
 use crate::services::net::{nsfix, resolv_conf::ResolvConf};
 use crate::services::{BwrapInfo, Context, HandleType, Scope, Service};
 use crate::{error::AppError, utils};
-use std::io::Read;
 use std::process::{Command, Stdio};
 
 pub struct Slirp4netns {
     command: Command,
     ready: SharedPipe,
+    with_dev: bool,
 
     resolv_conf: ResolvConf,
     if_name: String,
@@ -30,6 +30,7 @@ impl Slirp4netns {
         Ok(Self {
             command,
             ready,
+            with_dev: false,
             resolv_conf,
             if_name: config.if_name,
         })
@@ -37,7 +38,8 @@ impl Slirp4netns {
 }
 
 impl<C: Context> Service<C> for Slirp4netns {
-    fn apply_before(&mut self, _ctx: &mut C) -> Result<Scope, AppError> {
+    fn apply_before(&mut self, ctx: &mut C) -> Result<Scope, AppError> {
+        self.with_dev = ctx.arg_exist_before("--dev");
         Ok(Scope::new())
     }
 
@@ -59,16 +61,18 @@ impl<C: Context> Service<C> for Slirp4netns {
             .arg(&self.if_name);
         tracing::info!("Slirp4netns command: {:?}", self.command);
 
-        nsfix::fix(&mut self.command, info, "--userns-path=/proc/self/ns/user")?;
+        if self.with_dev {
+            nsfix::pre_exec_enter_ns(&mut self.command, info)?;
+            self.command.arg("--userns-path=/proc/self/ns/user");
+        }
+
+        tracing::trace!("CMD {:?}", self.command);
         let child = self
             .command
             .spawn()
             .map_err(AppError::spawn(utils::SLIRP4NETNS_CMD))?;
 
-        // Wait until ready
-        let mut buf = [0u8; 1];
-        let mut ready_rx = self.ready.into_rx();
-        let bytes = ready_rx.read(&mut buf).map_err(AppError::io(file!()))?;
+        let (bytes, _) = self.ready.read::<1>().map_err(AppError::io(file!()))?;
         if bytes == 0 {
             AppError::io("slirp4netns ready read")(ErrorKind::UnexpectedEof.into()).into_err()
         } else {
