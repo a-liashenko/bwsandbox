@@ -1,18 +1,16 @@
 use super::config::Config;
 use crate::fd::{AsFdArg, SharedPipe};
-use crate::services::slirp4netns::namespace::Namespace;
+use crate::services::net::{nsfix, resolv_conf::ResolvConf};
 use crate::services::{BwrapInfo, Context, HandleType, Scope, Service};
 use crate::{error::AppError, utils};
 use std::io::Read;
-use std::os::unix::process::CommandExt;
-use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
 pub struct Slirp4netns {
     command: Command,
     ready: SharedPipe,
 
-    resolv_conf: Option<PathBuf>,
+    resolv_conf: ResolvConf,
     if_name: String,
 }
 
@@ -27,46 +25,14 @@ impl Slirp4netns {
             command.stderr(Stdio::null());
         }
 
-        let resolv_conf = match config.resolv_conf {
-            Some(v) => {
-                let file = utils::temp_dir().join("slirp4netns_resolv.conf");
-                std::fs::write(&file, v).map_err(AppError::file(&file))?;
-                Some(file)
-            }
-            None => None,
-        };
-
+        let resolv_conf = config.resolv_conf.generate()?;
         let ready = SharedPipe::new()?;
-
         Ok(Self {
             command,
             ready,
             resolv_conf,
             if_name: config.if_name,
         })
-    }
-
-    fn fix_ns(&mut self, pid: u32) -> Result<(), AppError> {
-        use std::io::ErrorKind;
-
-        // If --dev used in bwrap it will create intermediate ns
-        // And to avoid setns(CLONE_NEWNET): Operation not permitted we need enter intermediate ns
-        // If --dev not used, parent ns will be our process ns
-        let own_ns = Namespace::open_pid(std::process::id())?;
-        let bw_pns = Namespace::open_pid(pid)?.parent()?;
-
-        let dev_used = own_ns.fd_inode()? != bw_pns.fd_inode()?;
-        if dev_used {
-            self.command.arg("--userns-path=/proc/self/ns/user");
-            unsafe {
-                self.command.pre_exec(move || {
-                    let result = bw_pns.enter();
-                    tracing::trace!("pre_exec status {result:?}");
-                    result.map_err(|_| ErrorKind::Other.into())
-                })
-            };
-        }
-        Ok(())
     }
 }
 
@@ -79,29 +45,21 @@ impl<C: Context> Service<C> for Slirp4netns {
         // Probably net should be unshared in bwrap if user want to use slirp4netns
         ctx.command_mut().arg("--unshare-net");
 
-        let mut scope = Scope::new();
-        if let Some(path) = &self.resolv_conf {
-            ctx.command_mut()
-                .arg("--ro-bind")
-                .arg(path)
-                .arg("/etc/resolv.conf");
-            scope = scope.remove_file(path);
-        }
-
+        let scope = self.resolv_conf.mount(ctx.command_mut(), Scope::new());
         Ok(scope)
     }
 
-    fn start(mut self: Box<Self>, status: &BwrapInfo) -> Result<HandleType, AppError> {
+    fn start(mut self: Box<Self>, info: &BwrapInfo) -> Result<HandleType, AppError> {
         use std::io::ErrorKind;
 
         self.command
             .arg("--ready-fd")
             .arg_fd(self.ready.share_tx()?)?
-            .arg(status.sandbox.child_pid.to_string())
+            .arg(info.sandbox.child_pid.to_string())
             .arg(&self.if_name);
         tracing::info!("Slirp4netns command: {:?}", self.command);
 
-        self.fix_ns(status.sandbox.child_pid)?;
+        nsfix::fix(&mut self.command, info, "--userns-path=/proc/self/ns/user")?;
         let child = self
             .command
             .spawn()

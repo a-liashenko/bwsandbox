@@ -84,8 +84,11 @@ Extra args added to bwrap:
 Extra args added to bwrap:  
 `--symlink` - symlink xdg-dbus-proxy socket from temp dir into sandbox /run dir
 
-**slirp4netns** - host network isolation  
+**slirp4netns** - host network isolation option one  
 No extra args, but some magic with namespaces and the bwrap `--dev` flag.
+
+**pasta** - host network isolation option two  
+No extra args, but same magic as slirp4netns
 
 **appimage** - appimage support  
 Extra args added to bwrap:  

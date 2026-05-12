@@ -1,11 +1,12 @@
-use crate::config::Cmd;
+use crate::{config::Cmd, services::net::resolv_conf::ResolvConfVal};
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
     #[serde(default = "default_if_name")]
     pub if_name: String,
-    pub resolv_conf: Option<String>,
+    #[serde(default)]
+    pub resolv_conf: ResolvConfVal,
     #[serde(default = "default_quiet")]
     pub quiet: bool,
     #[serde(flatten)]
