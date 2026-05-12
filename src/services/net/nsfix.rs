@@ -85,6 +85,8 @@ pub fn pre_exec_enter_ns(service: &mut Command, info: &BwrapInfo) -> Result<(), 
     Ok(())
 }
 
+// Allow simillar names, because they have readable semantic
+#[allow(clippy::similar_names)]
 #[tracing::instrument(skip(info))]
 fn print_ns_info(info: &BwrapInfo) -> Result<(), AppError> {
     use tracing::trace;

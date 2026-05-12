@@ -24,7 +24,7 @@ impl AsRef<str> for NamespaceType {
 }
 
 impl NamespaceType {
-    fn link_type(&self) -> LinkNameSpaceType {
+    fn link_type(self) -> LinkNameSpaceType {
         match self {
             Self::User => LinkNameSpaceType::User,
             Self::Net => LinkNameSpaceType::Network,
@@ -40,7 +40,7 @@ pub struct Namespace {
 
 impl Namespace {
     fn new(fd: OwnedFd, ty: NamespaceType) -> Self {
-        Self { fd, ty }
+        Self { ty, fd }
     }
 
     pub fn open_pid(pid: u32, ty: NamespaceType) -> Result<Self, Error> {
