@@ -67,7 +67,7 @@ impl<C: Context> Service<C> for Slirp4netns {
             self.command.arg("--userns-path=/proc/self/ns/user");
         }
 
-        println!("CMD {:?}", self.command);
+        tracing::trace!("CMD {:?}", self.command);
         let child = self
             .command
             .spawn()
