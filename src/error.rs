@@ -36,7 +36,7 @@ pub enum AppError {
     PipeAlloc(std::io::Error),
     #[error("Failed to parse bwrap event {0:?}")]
     BwrapEvent(serde_json::Error),
-    #[error("Slir4netns failed with {0:?}")]
+    #[error("System call failed with {0:?}")]
     System(#[from] crate::system::Error),
     //
     // #[error(transparent)]
