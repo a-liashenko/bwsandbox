@@ -2,7 +2,23 @@ use crate::{error::AppError, utils};
 use lexopt::Parser;
 use std::{ffi::OsString, path::PathBuf};
 
-const CONFIG_DIR: &str = "XDG_CONFIG_HOME";
+fn get_config_dir() -> Result<String, AppError> {
+    const CONFIG_DIR: &str = "XDG_CONFIG_HOME";
+    const HOME: &str = "HOME";
+
+    match std::env::var(CONFIG_DIR) {
+        Ok(v) if !v.is_empty() => Ok(v),
+        Err(err @ std::env::VarError::NotUnicode(_)) => {
+            //
+            Err(AppError::Env(CONFIG_DIR.into(), err))
+        }
+        // Handle both scenarios: NotPreseted and presented but empty
+        _ => {
+            let home = std::env::var(HOME).map_err(AppError::env(HOME))?;
+            Ok(format!("{home}/.config"))
+        }
+    }
+}
 
 #[derive(Debug)]
 pub struct Args {
@@ -75,7 +91,7 @@ fn parse_name(parser: &mut Parser) -> Result<(PathBuf, String), AppError> {
 
 #[tracing::instrument]
 fn from_name(name: OsString) -> Result<(PathBuf, String), AppError> {
-    let config_dir = std::env::var(CONFIG_DIR).map_err(AppError::env(CONFIG_DIR))?;
+    let config_dir = get_config_dir()?;
     let config_path = PathBuf::from(&config_dir).join(utils::APP_NAME).join(name);
     let content = std::fs::read_to_string(&config_path).map_err(AppError::file(&config_path))?;
     Ok((config_path, content))
