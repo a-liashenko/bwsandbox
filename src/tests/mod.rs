@@ -177,6 +177,9 @@ fn test_net_internal() {
     assert!(output.stderr_str().contains("Failed to"));
 
     // Test with pasta isolation
+    // TODO: Find solution to be sure that pasta fully configured whole net stack
+    // May fail, because pasta don't have any --ready-fd or simillar
+    // Unfortunatelly, --config-net + pasta rules applied a bit late in test
     args[1] = "./profiles/with-pasta.toml";
     let output = cargo_spawn_out(args).unwrap();
     assert!(output.stdout_str().is_empty());

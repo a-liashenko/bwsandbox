@@ -9,4 +9,16 @@ inline = [
     #
     { type = "str", value = "--config-net" },
     { type = "str", value = "-q" },
+
+    # Disable any host network mappings
+    { type = "str", value = "--tcp-ports" },
+    { type = "str", value = "none" },
+    { type = "str", value = "--udp-ports" },
+    { type = "str", value = "none" },
+    { type = "str", value = "--tcp-ns" },
+    { type = "str", value = "none" },
+    { type = "str", value = "--udp-ns" },
+    { type = "str", value = "none" },
+    { type = "str", value = "--no-map-gw" },
+
 ]
