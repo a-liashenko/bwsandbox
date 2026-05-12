@@ -21,12 +21,11 @@ impl ResolvConfVal {
 #[derive(Debug)]
 pub struct ResolvConf(Option<PathBuf>);
 impl ResolvConf {
-    pub fn mount(&self, command: &mut Command, scope: Scope) -> Scope {
-        let path = match &self.0 {
-            Some(v) => v,
-            None => return scope,
-        };
-        command.arg("--ro-bind").arg(path).arg("/etc/resolv.conf");
-        scope.remove_file(path)
+    pub fn mount(&self, command: &mut Command, mut scope: Scope) -> Scope {
+        if let Some(path) = &self.0 {
+            command.arg("--ro-bind").arg(path).arg("/etc/resolv.conf");
+            scope = scope.remove_file(path);
+        }
+        scope
     }
 }
