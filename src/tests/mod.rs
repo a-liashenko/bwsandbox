@@ -129,6 +129,11 @@ fn test_net_external() {
         "<replace me>",
         "--",
         "curl",
+        "--retry",
+        "10",
+        "--retry-delay",
+        "0.1",
+        "--retry-all-errors",
         "-I",
         "example.com",
     ];
