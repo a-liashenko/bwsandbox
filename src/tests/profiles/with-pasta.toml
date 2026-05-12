@@ -1,0 +1,12 @@
+[bwrap.template]
+name = "base.j2"
+dir = "./profiles/templates"
+
+[pasta]
+type = "inline"
+resolv_conf = "nameserver 1.1.1.1"
+inline = [
+    #
+    { type = "str", value = "--config-net" },
+    { type = "str", value = "-q" },
+]

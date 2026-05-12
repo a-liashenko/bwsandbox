@@ -108,22 +108,30 @@ fn test_dbus() {
 }
 
 #[test]
-fn test_slirp4netns_external() {
-    let args = vec![
+fn test_net_external() {
+    let mut args = vec![
+        //
         "-f",
-        "./profiles/with-slirp4netns.toml",
+        "<replace me>",
         "--",
         "curl",
         "-I",
         "example.com",
     ];
+
+    args[1] = "./profiles/with-slirp4netns.toml";
+    let output = cargo_spawn_out(args.clone()).unwrap();
+    let header = output.stdout_str().lines().next().unwrap();
+    assert!(header.contains("200 OK"));
+
+    args[1] = "./profiles/with-pasta.toml";
     let output = cargo_spawn_out(args).unwrap();
     let header = output.stdout_str().lines().next().unwrap();
     assert!(header.contains("200 OK"));
 }
 
 #[test]
-fn test_slirp4netns_internal() {
+fn test_net_internal() {
     let local_addr = {
         let socket = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
         let local_addr = socket.local_addr().unwrap();
@@ -143,8 +151,14 @@ fn test_slirp4netns_internal() {
     let output = cargo_spawn_out(args.clone()).unwrap();
     assert_eq!(output.stdout_str(), "Hello world!");
 
-    // Test with isolation
+    // Test with slirp4netns isolation
     args[1] = "./profiles/with-slirp4netns.toml";
+    let output = cargo_spawn_out(args.clone()).unwrap();
+    assert!(output.stdout_str().is_empty());
+    assert!(output.stderr_str().contains("Failed to"));
+
+    // Test with pasta isolation
+    args[1] = "./profiles/with-pasta.toml";
     let output = cargo_spawn_out(args).unwrap();
     assert!(output.stdout_str().is_empty());
     assert!(output.stderr_str().contains("Failed to"));
