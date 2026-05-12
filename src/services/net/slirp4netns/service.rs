@@ -3,7 +3,6 @@ use crate::fd::{AsFdArg, SharedPipe};
 use crate::services::net::{nsfix, resolv_conf::ResolvConf};
 use crate::services::{BwrapInfo, Context, HandleType, Scope, Service};
 use crate::{error::AppError, utils};
-use std::io::Read;
 use std::process::{Command, Stdio};
 
 pub struct Slirp4netns {
@@ -73,10 +72,7 @@ impl<C: Context> Service<C> for Slirp4netns {
             .spawn()
             .map_err(AppError::spawn(utils::SLIRP4NETNS_CMD))?;
 
-        // Wait until ready
-        let mut buf = [0u8; 1];
-        let mut ready_rx = self.ready.into_rx();
-        let bytes = ready_rx.read(&mut buf).map_err(AppError::io(file!()))?;
+        let (bytes, _) = self.ready.read::<1>().map_err(AppError::io(file!()))?;
         if bytes == 0 {
             AppError::io("slirp4netns ready read")(ErrorKind::UnexpectedEof.into()).into_err()
         } else {

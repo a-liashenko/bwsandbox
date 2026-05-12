@@ -1,4 +1,5 @@
 use super::resolv_conf::{ResolvConf, ResolvConfVal};
+use crate::fd::{AsFdArg, SharedPipe};
 use crate::services::{BwrapInfo, Context, HandleType, Scope, Service};
 use crate::{config::Cmd, error::AppError, utils};
 use serde::Deserialize;
@@ -54,6 +55,10 @@ impl<C: Context> Service<C> for Pasta {
     }
 
     fn start(mut self: Box<Self>, info: &BwrapInfo) -> Result<HandleType, AppError> {
+        let mut ready = SharedPipe::new()?;
+        let tx = ready.share_tx_dangling()?;
+        self.command.arg("--pid").arg_fd_path(tx)?;
+
         let arg = if self.with_dev {
             super::nsfix::pre_exec_enter_ns(&mut self.command, info)?;
             format!("--netns=/proc/{}/ns/net", info.sandbox.child_pid)
@@ -67,6 +72,10 @@ impl<C: Context> Service<C> for Pasta {
             .command
             .spawn()
             .map_err(AppError::spawn(utils::PASTA_CMD))?;
-        Ok(HandleType::new(child))
+
+        match ready.read::<1>() {
+            Ok(_) => Ok(HandleType::new(child)),
+            Err(e) => Err(AppError::io("Failed to read pasta ready")(e)),
+        }
     }
 }
