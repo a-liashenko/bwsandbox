@@ -50,9 +50,9 @@ impl<C: Context> Service<C> for Pasta {
     }
 
     fn start(mut self: Box<Self>, info: &BwrapInfo) -> Result<HandleType, AppError> {
+        super::nsfix::fix(&mut self.command, info, "--userns=/proc/self/ns/user")?;
         self.command.arg(info.sandbox.child_pid.to_string());
 
-        super::nsfix::fix(&mut self.command, info, "--userns=/proc/self/ns/user")?;
         let child = self
             .command
             .spawn()
