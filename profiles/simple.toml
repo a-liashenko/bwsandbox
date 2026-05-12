@@ -41,7 +41,7 @@ inline = [
 # Bind /etc/lsb-release and /etc/os-release into sandbox
 name = "simple.j2"
 # Required, template dir
-dir = "./profiles/templates"
+dir = "./templates"
 
 # Required
 [bwrap.template.context]
@@ -54,7 +54,7 @@ lsb = { type = "str", value = "/etc/lsb-release" }
 # Required, can be 'include' or 'inline'
 type = "include"
 # Required if type 'include'
-include = "./profiles/simple-seccomp.toml"
+include = "./simple-seccomp.toml"
 
 
 # Optional, uncomment to filter dbus calls
@@ -104,6 +104,18 @@ inline = [
     { type = "str", value = "--disable-host-loopback" },
     { type = "str", value = "--mtu=65520" },
 ]
+
+### Another option for host network isolation
+# [pasta]
+# # Options, same as bwrap -- 'inline' or 'template' can be used
+# type = 'inline'
+# # Replace content of /etc/resolv.conf with custom settings
+# resolv_conf = "nameserver 1.1.1.1"
+# inline = [
+#     # 
+#     { type = "str", value = "-q" },
+#     { type = "str", value = "--config-net" },
+# ]
 
 # Optional
 # Adds APPIMAGE_EXTRACT_AND_RUN = 1 env variable to sandboxed app
