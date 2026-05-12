@@ -19,6 +19,11 @@ impl Context for BwrapProcBuilder {
     fn command_mut(&mut self) -> &mut std::process::Command {
         &mut self.command
     }
+
+    fn arg_exist_before(&self, arg: &str) -> bool {
+        assert!(!self.args.is_empty(), "Valid only for apply_before");
+        self.args.iter().find(|v| *v == arg).is_some()
+    }
 }
 
 impl BwrapProcBuilder {

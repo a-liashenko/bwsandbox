@@ -17,6 +17,7 @@ pub trait Service<C: Context> {
 
 pub trait Context: std::fmt::Debug {
     fn command_mut(&mut self) -> &mut std::process::Command;
+    fn arg_exist_before(&self, arg: &str) -> bool;
 }
 
 pub trait Handle: std::fmt::Debug {
