@@ -1,6 +1,6 @@
 [bwrap.template]
 name = "base.j2"
-dir = "./profiles/templates"
+dir = "./templates"
 
 [env_mapper]
 type = 'inline'

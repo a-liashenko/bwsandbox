@@ -28,6 +28,20 @@ fn test_bwrap() {
 }
 
 #[test]
+fn test_relative_paths_in_config() {
+    let args = vec![
+        "-f",
+        "./profiles/test-relative/profile.toml",
+        "--",
+        "ls",
+        "/home",
+    ];
+    let sandbox = utils::cargo_spawn_out(args).unwrap();
+    assert!(sandbox.status.success());
+    assert!(sandbox.stdout.is_empty());
+}
+
+#[test]
 fn test_seccomp() {
     // Use seccomp to restrict dir listings
     let args = vec!["-f", "./profiles/with-seccomp.toml", "--", "ls", "/"];
