@@ -27,19 +27,12 @@ impl<T: AsFd> AsFdExtra for T {
 
 pub trait AsFdArg<T: AsFd> {
     fn arg_fd(&mut self, fd: &T) -> Result<&mut Command, AppError>;
-    fn arg_fd_path(&mut self, fd: &T) -> &mut Command;
 }
 
 impl<T: AsFd> AsFdArg<T> for std::process::Command {
     fn arg_fd(&mut self, fd: &T) -> Result<&mut Command, AppError> {
         let command = self.arg(fd.as_fd().as_raw_fd().to_string());
         Ok(command)
-    }
-
-    fn arg_fd_path(&mut self, fd: &T) -> &mut Command {
-        let fd = fd.as_fd().as_raw_fd();
-        let arg = format!("/proc/{}/fd/{}", std::process::id(), fd);
-        self.arg(arg)
     }
 }
 

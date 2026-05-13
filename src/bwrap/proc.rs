@@ -169,5 +169,8 @@ impl Drop for BwrapProc {
             _ => return,
         };
         tracing::info!("bwrap killed with {status:?}");
+
+        let wait = self.proc.wait();
+        tracing::info!("bwrap wait after kill {wait:?}");
     }
 }

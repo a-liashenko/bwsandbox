@@ -95,8 +95,4 @@ impl SharedPipe {
     pub fn into_tx(self) -> PipeWriter {
         self.tx.take_part()
     }
-
-    pub fn into_parts(self) -> (PipePart<PipeReader>, PipePart<PipeWriter>) {
-        (self.rx, self.tx)
-    }
 }

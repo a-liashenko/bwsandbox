@@ -5,7 +5,6 @@ use serde::Deserialize;
 use std::{
     path::PathBuf,
     process::{Command, Stdio},
-    time::Duration,
 };
 
 #[derive(Debug, Deserialize)]
@@ -61,16 +60,13 @@ impl<C: Context> Service<C> for DbusService {
 
     #[tracing::instrument]
     fn start(mut self: Box<Self>, _: &BwrapInfo) -> Result<HandleType, AppError> {
-        const POLL: Duration = Duration::from_millis(100);
-        const TOTAL_POLL: Duration = Duration::from_secs(3);
-
         let child = self
             .command
             .stdin(Stdio::null())
             .spawn()
             .map_err(AppError::spawn(utils::DBUS_CMD))?;
 
-        let exists = crate::utils::poll_file(&self.proxy_bus, POLL, TOTAL_POLL)?;
+        let exists = utils::poll_file(&self.proxy_bus, utils::READY_POLL, utils::READY_TIMEOUT)?;
         if !exists {
             let err = std::io::ErrorKind::NotFound;
             return Err(AppError::file(&self.proxy_bus)(err.into()));
