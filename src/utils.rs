@@ -23,9 +23,18 @@ pub fn rand_id(len: usize) -> String {
 }
 
 pub fn temp_dir() -> PathBuf {
-    std::env::var("XDG_RUNTIME_DIR")
-        .map_or(std::env::temp_dir(), PathBuf::from)
-        .join(format!("{APP_NAME}-workdir-{}", sandbox_id()))
+    // RUNTIME_DIRECTORY - systemd headless
+    // XDG_RUNTIME_DIR - user session
+    let base = std::env::var("RUNTIME_DIRECTORY")
+        .or_else(|_| std::env::var("XDG_RUNTIME_DIR"))
+        .unwrap_or_else(|_| {
+            tracing::warn!(
+                "Neither RUNTIME_DIRECTORY nor XDG_RUNTIME_DIR set, falling back to /tmp"
+            );
+            std::env::temp_dir().to_string_lossy().into_owned()
+        });
+
+    PathBuf::from(base).join(format!("{APP_NAME}-workdir-{}", sandbox_id()))
 }
 
 pub fn poll_file(path: &Path, poll: Duration, total: Duration) -> Result<bool, AppError> {
