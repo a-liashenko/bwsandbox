@@ -77,7 +77,7 @@ impl<C: Context> Service<C> for Pasta {
             .spawn()
             .map_err(AppError::spawn(utils::PASTA_CMD))?;
 
-        let (_tx, mut rx) = ready.into_parts();
+        let (mut rx, _tx) = ready.into_parts();
         match rx.try_read_ext::<1>(std::time::Duration::from_secs(1)) {
             Ok(_) => Ok(HandleType::new(child)),
             Err(e) => Err(AppError::io("Failed to read pasta ready")(e)),
