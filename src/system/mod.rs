@@ -1,4 +1,7 @@
+mod fd;
 mod namespaces;
+
+pub use fd::{AsFdArg, AsFdExtra, ReadExt, SharedPipe};
 pub use namespaces::{Namespace, NamespaceType};
 
 #[allow(clippy::enum_variant_names)]

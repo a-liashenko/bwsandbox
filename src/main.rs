@@ -5,7 +5,6 @@ mod app;
 mod bwrap;
 mod config;
 mod error;
-mod fd;
 mod services;
 mod system;
 mod temp_dir;
