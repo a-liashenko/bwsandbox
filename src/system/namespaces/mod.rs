@@ -4,7 +4,7 @@ use super::Error;
 use ioctl::NsGetParent;
 use rustix::fs::{Mode, OFlags};
 use rustix::thread::LinkNameSpaceType;
-use std::os::fd::{AsRawFd, BorrowedFd, OwnedFd};
+use std::os::fd::{AsFd, BorrowedFd, OwnedFd};
 
 mod ioctl;
 
@@ -62,7 +62,7 @@ impl Namespace {
     }
 
     pub fn fd(&self) -> BorrowedFd<'_> {
-        unsafe { BorrowedFd::borrow_raw(self.fd.as_raw_fd()) }
+        self.fd.as_fd()
     }
 
     pub fn enter(&self) -> Result<(), Error> {
