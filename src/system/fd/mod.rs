@@ -68,7 +68,7 @@ impl<T: AsFd + Read> ReadExt for T {
         use rustix::event::{PollFd, PollFlags, Timespec};
 
         let timeout = Timespec {
-            tv_sec: timeout.as_secs().try_into().unwrap_or(0),
+            tv_sec: timeout.as_secs().try_into().expect("Bad timeout value"),
             tv_nsec: timeout.subsec_nanos().into(),
         };
         let mut poll_fds = [PollFd::new(self, PollFlags::IN | PollFlags::HUP)];
