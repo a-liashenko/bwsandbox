@@ -141,7 +141,7 @@ impl BwrapProc {
                 Ok(Events::Exit(status)) => status.exit_code,
                 Err(AppError::Io(ctx, e)) if e.kind() == ErrorKind::UnexpectedEof => {
                     tracing::warn!("Bwrap crashed? Context: {ctx}");
-                    -1
+                    return Err(AppError::io("Bwrap unexpected exit")(e));
                 }
                 Ok(e) => {
                     tracing::warn!("Unhandled bwrap event {e:?}");
