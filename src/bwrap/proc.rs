@@ -22,7 +22,7 @@ impl Context for BwrapProcBuilder {
 
     fn arg_exist_before(&self, arg: &str) -> bool {
         assert!(!self.args.is_empty(), "Valid only for apply_before");
-        self.args.iter().find(|v| *v == arg).is_some()
+        self.args.iter().any(|v| v == arg)
     }
 }
 
