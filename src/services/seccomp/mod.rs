@@ -1,9 +1,9 @@
 use crate::error::AppError;
 use crate::services::{BwrapInfo, Context, HandleType, Scope, Service};
-use crate::system::AsFdExtra;
+use crate::system::{AsFdArg, AsFdExtra};
 use anyhow::Context as _;
+use std::fs::File;
 use std::io::Seek;
-use std::{fs::File, os::fd::AsRawFd};
 
 mod config;
 mod ffi;
@@ -57,9 +57,7 @@ impl<C: Context> Service<C> for SeccompService {
 
     #[tracing::instrument]
     fn apply_after(&mut self, ctx: &mut C) -> Result<Scope, AppError> {
-        ctx.command_mut()
-            .arg("--seccomp")
-            .arg(self.fd.as_raw_fd().to_string());
+        ctx.command_mut().arg("--seccomp").arg_fd(&self.fd)?;
         Ok(Scope::new())
     }
 
