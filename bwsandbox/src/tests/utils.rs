@@ -43,9 +43,11 @@ pub(super) fn cargo_command() -> Command {
 }
 
 pub(super) fn working_dir() -> PathBuf {
-    let tests_dir = PathBuf::from(file!());
-    let tests_dir = tests_dir.parent().expect("Failed to get tests parent dir");
-    tests_dir
-        .canonicalize()
-        .expect("Failed to get full parth for tests dir")
+    let mut this_dir = PathBuf::from(file!());
+    this_dir.pop();
+
+    let mut root_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    root_dir.pop();
+
+    root_dir.join(this_dir)
 }
