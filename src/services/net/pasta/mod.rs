@@ -1,6 +1,6 @@
 use super::resolv_conf::{ResolvConf, ResolvConfVal};
-use crate::fd::{AsFdArg, SharedPipe};
 use crate::services::{BwrapInfo, Context, HandleType, Scope, Service};
+use crate::system::{AsFdArg, ReadExt, SharedPipe};
 use crate::{config::Cmd, error::AppError, utils};
 use serde::Deserialize;
 use std::process::Command;
@@ -55,9 +55,13 @@ impl<C: Context> Service<C> for Pasta {
     }
 
     fn start(mut self: Box<Self>, info: &BwrapInfo) -> Result<HandleType, AppError> {
+        // Pasta strace:
+        // close_range(3, 4294967295, CLOSE_RANGE_UNSHARE) = 0
+        // In result, pipe tx end will be closed in pasta and lead to open error
+        // This why fd should be alive on parent side
+
         let mut ready = SharedPipe::new()?;
-        let tx = ready.share_tx_dangling()?;
-        self.command.arg("--pid").arg_fd_path(tx)?;
+        self.command.arg("--pid").arg_fd_path(ready.share_tx()?);
 
         let arg = if self.with_dev {
             super::nsfix::pre_exec_enter_ns(&mut self.command, info)?;
@@ -73,7 +77,8 @@ impl<C: Context> Service<C> for Pasta {
             .spawn()
             .map_err(AppError::spawn(utils::PASTA_CMD))?;
 
-        match ready.read::<1>() {
+        let (_tx, mut rx) = ready.into_parts();
+        match rx.try_read_ext::<1>(std::time::Duration::from_secs(1)) {
             Ok(_) => Ok(HandleType::new(child)),
             Err(e) => Err(AppError::io("Failed to read pasta ready")(e)),
         }
