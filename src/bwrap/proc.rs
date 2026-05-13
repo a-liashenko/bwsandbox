@@ -1,6 +1,6 @@
 use crate::bwrap::events::{Events, EventsReader, SandboxStatus};
-use crate::fd::{AsFdArg, SharedPipe};
 use crate::services::{BwrapInfo, Context, Scope, ScopeCleanup, Service};
+use crate::system::{AsFdArg, SharedPipe};
 use crate::{error::AppError, utils};
 use std::io::{PipeReader, PipeWriter, Write};
 use std::os::unix::process::ExitStatusExt;

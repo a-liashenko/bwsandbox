@@ -1,7 +1,7 @@
 use super::config::Config;
-use crate::fd::{AsFdArg, SharedPipe};
 use crate::services::net::{nsfix, resolv_conf::ResolvConf};
 use crate::services::{BwrapInfo, Context, HandleType, Scope, Service};
+use crate::system::{AsFdArg, ReadExt, SharedPipe};
 use crate::{error::AppError, utils};
 use std::process::{Command, Stdio};
 
@@ -52,8 +52,6 @@ impl<C: Context> Service<C> for Slirp4netns {
     }
 
     fn start(mut self: Box<Self>, info: &BwrapInfo) -> Result<HandleType, AppError> {
-        use std::io::ErrorKind;
-
         self.command
             .arg("--ready-fd")
             .arg_fd(self.ready.share_tx()?)?
@@ -72,11 +70,10 @@ impl<C: Context> Service<C> for Slirp4netns {
             .spawn()
             .map_err(AppError::spawn(utils::SLIRP4NETNS_CMD))?;
 
-        let (bytes, _) = self.ready.read::<1>().map_err(AppError::io(file!()))?;
-        if bytes == 0 {
-            AppError::io("slirp4netns ready read")(ErrorKind::UnexpectedEof.into()).into_err()
-        } else {
-            Ok(HandleType::new(child))
+        let mut rx = self.ready.into_rx();
+        match rx.try_read_ext::<1>(std::time::Duration::from_secs(1)) {
+            Ok(_) => Ok(HandleType::new(child)),
+            Err(e) => Err(AppError::io("Failed to read slirp4netns ready")(e)),
         }
     }
 }

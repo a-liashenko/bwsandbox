@@ -1,6 +1,6 @@
 use crate::error::AppError;
-use crate::fd::AsFdExtra;
 use crate::services::{BwrapInfo, Context, HandleType, Scope, Service};
+use crate::system::AsFdExtra;
 use anyhow::Context as _;
 use std::io::Seek;
 use std::{fs::File, os::fd::AsRawFd};
