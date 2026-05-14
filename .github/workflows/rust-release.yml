@@ -33,11 +33,6 @@ jobs:
       - name: Build release binary
         run: cargo build --release
 
-      - name: Generate SHA256 checksum && tag binary
-        run: |
-          cp target/release/$BWSANDBOX_BIN target/release/$BWSANDBOX_BIN
-          cp target/release/$BWSANDBOX_NETNS_BIN target/release/$BWSANDBOX_NETNS_BIN
-
       - name: Upload release binary
         uses: softprops/action-gh-release@v2
         with:
