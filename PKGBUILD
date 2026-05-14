@@ -25,4 +25,5 @@ build() {
 package() {
     cd "$pkgname"
     install -Dm755 target/release/bwsandbox "$pkgdir/usr/bin/bwsandbox"
+    install -Dm755 target/release/bwsandbox-netns "$pkgdir/usr/bin/bwsandbox-netns"
 }

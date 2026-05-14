@@ -1,0 +1,6 @@
+[bwrap.template]
+name = "base.j2"
+dir = "./templates"
+
+[appimage]
+type = 'inline'
