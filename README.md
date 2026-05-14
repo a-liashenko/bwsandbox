@@ -117,7 +117,7 @@ bwsandbox = "/usr/bin/bwsandbox"
 # List of users who allowed to use this tool
 allowed_uids = [ 1000 ]
 # List of network namespaces allowed to enter
-allowed_netns = [ "vps" ]
+allowed_netns = [ "vpn" ]
 
 ```
 
