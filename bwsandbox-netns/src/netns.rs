@@ -59,13 +59,9 @@ impl Netns {
             rustix::thread::unshare_unsafe(UnshareFlags::NEWNS).map_err(AppError::UnshareNs)?;
         }
 
-        // Create empty mount point in place of resolv.conf
-        rustix::mount::mount_bind("/dev/null", RESOLV_CONF)
-            .map_err(AppError::mount("Failed create resolv.conf mountpoint"))?;
-
-        // Isolate host location
+        // Isolate host / mount table
         rustix::mount::mount_change(
-            RESOLV_CONF,
+            "/",
             MountPropagationFlags::PRIVATE | MountPropagationFlags::REC,
         )
         .map_err(AppError::mount("Failed to isolate host /etc/resolv.conf"))?;
