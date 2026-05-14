@@ -10,8 +10,8 @@ permissions:
 
 env:
   TAG: ${{ github.ref_name }}
-  BINARY_NAME: bwsandbox
-  BINARY_TAGGED: bwsandbox-${{ github.ref_name }}
+  BWSANDBOX_BIN: bwsandbox
+  BWSANDBOX_NETNS_BIN: bwsandbox-netns
 
 jobs:
   run_tests:
@@ -35,13 +35,12 @@ jobs:
 
       - name: Generate SHA256 checksum && tag binary
         run: |
-          cp target/release/$BINARY_NAME target/release/$BINARY_TAGGED
-          sha256sum target/release/$BINARY_TAGGED > target/release/$BINARY_TAGGED.sha256
-          cat target/release/$BINARY_TAGGED.sha256
+          cp target/release/$BWSANDBOX_BIN target/release/$BWSANDBOX_BIN
+          cp target/release/$BWSANDBOX_NETNS_BIN target/release/$BWSANDBOX_NETNS_BIN
 
       - name: Upload release binary
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            target/release/${{ env.BINARY_TAGGED }}
-            target/release/${{ env.BINARY_TAGGED }}.sha256
+            target/release/${{ env.BWSANDBOX_BIN }}
+            target/release/${{ env.BWSANDBOX_NETNS_BIN }}
