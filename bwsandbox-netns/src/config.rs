@@ -45,7 +45,7 @@ impl Config {
     }
 
     pub fn get_bwsandbox_bin(&self, default: &OsStr) -> Result<PathBuf, AppError> {
-        let path = self.bwsandbox.as_deref().map(OsStr::new).unwrap_or(default);
+        let path = self.bwsandbox.as_deref().map_or(default, OsStr::new);
         let path = PathBuf::from(path)
             .canonicalize()
             .map_err(AppError::io("Failed to get full path for bwsandbox"))?;
