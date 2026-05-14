@@ -94,6 +94,33 @@ No extra args, but same magic as slirp4netns
 Extra args added to bwrap:  
 `--setenv` - set [APPIMAGE_EXTRACT_AND_RUN](https://github.com/AppImage/AppImageKit/issues/841) to `1`
 
+## Bwsandbox netns helper
+
+> [!WARNING]
+> This is a highly experimental tool. It requires `CAP_SYS_ADMIN` which is very dangerous if the binary or dependencies have malicious code or bugs. This helper is worth using only for a very specific scenario.
+
+Main goal is to run bwsandbox inside a pre-created network namespace. F.e. to route the whole application via a VPN living in a separate netns.  
+`CAP_SYS_ADMIN` is required to switch into the target net namespace and mount `/etc/netns/ns-name/resolv.conf` into it.  
+**ALL** capabilities will be dropped before launching `bwsandbox`.
+
+Usage: `bwsandbox-netns <ns name> <bwsandbox args>`  
+Example: `bwsandbox-netns vpn -n generic -- /bin/bash`
+
+## Configuration
+
+Hardcoded config location: `/etc/bwsandbox/netns.toml`  
+Config file must be owned by `root:root` and **not** be group or world-writable (max `644`)
+
+```toml
+# Path to bwsandbox binary
+bwsandbox = "/usr/bin/bwsandbox"
+# List of users who allowed to use this tool
+allowed_uids = [ 1000 ]
+# List of network namespaces allowed to enter
+allowed_netns = [ "vpn" ]
+
+```
+
 ## Acknowledgments
 
 [bubblejail](https://github.com/igo95862/bubblejail) - for extensive explanation in issue about `--dev` bwrap flag and slirp4netns

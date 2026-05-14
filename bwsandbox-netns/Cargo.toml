@@ -1,0 +1,16 @@
+[package]
+name = "bwsandbox-netns"
+version = "0.4.0"
+edition = "2024"
+license = "GPL-3.0-or-later"
+
+[lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+unreadable_literal = "allow"
+missing_errors_doc = "allow"
+
+[dependencies]
+rustix = { workspace = true, features = ["process", "thread", "mount", "std"], default-features = false }
+serde = { workspace = true, default-features = false, features = ["std", "derive"] }
+thiserror = { workspace = true, default-features = false, features = ["std"] }
+toml = { workspace = true, default-features = false, features = ["std", "serde", "parse"] }
