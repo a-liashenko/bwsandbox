@@ -28,7 +28,7 @@ impl Cmd {
         items.extend(inline.map(OsString::from));
 
         let template = self.iter_template()?;
-        if let Some(mut iter) = template.iter() {
+        if let Some(mut iter) = template.iter_opt() {
             items.extend(iter.by_ref().map(OsString::from));
             if iter.had_error {
                 return Err(AppError::TemplateShlex);
@@ -49,7 +49,7 @@ impl TemplateArgs {
         Self { rendered }
     }
 
-    pub fn iter(&'_ self) -> Option<Shlex<'_>> {
+    pub fn iter_opt(&'_ self) -> Option<Shlex<'_>> {
         self.rendered.as_deref().map(Shlex::new)
     }
 }
