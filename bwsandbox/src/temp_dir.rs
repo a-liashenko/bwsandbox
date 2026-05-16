@@ -1,5 +1,5 @@
 use crate::error::AppError;
-use std::path::PathBuf;
+use std::{os::unix::fs::PermissionsExt, path::PathBuf};
 
 #[derive(Debug)]
 pub struct TempDirGuard {
@@ -9,6 +9,8 @@ pub struct TempDirGuard {
 impl TempDirGuard {
     pub fn new(dir: PathBuf) -> Result<Self, AppError> {
         std::fs::create_dir_all(&dir).map_err(|e| AppError::TempDir(dir.clone(), e))?;
+        std::fs::set_permissions(&dir, PermissionsExt::from_mode(0o700))
+            .map_err(|e| AppError::TempDir(dir.clone(), e))?;
         Ok(Self { dir })
     }
 }
