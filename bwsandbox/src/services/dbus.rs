@@ -25,15 +25,13 @@ pub struct DbusService {
 
 impl DbusService {
     pub fn from_config(cfg: Config) -> Result<Self, AppError> {
-        let inline_args = cfg.cmd.iter_inline();
-        let template_args = cfg.cmd.iter_template()?;
+        let args = cfg.cmd.collect_args()?;
 
         let mut command = Command::new(utils::DBUS_CMD);
         command
             .arg(cfg.user_bus.as_inner())
             .arg(cfg.proxy_bus.as_inner())
-            .args(inline_args)
-            .args(template_args.iter());
+            .args(args);
         tracing::info!("dbus proxy command {command:?}");
 
         Ok(Self {

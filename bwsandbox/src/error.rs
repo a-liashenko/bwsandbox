@@ -22,6 +22,8 @@ pub enum AppError {
     Config(#[from] toml::de::Error),
     #[error("Template: {0:?}")]
     Template(#[from] minijinja::Error),
+    #[error("Failed to parse template args")]
+    TemplateShlex,
     #[error("Spawn {0:?}: {1:?}")]
     Spawn(String, std::io::Error),
     #[error("Unexpected or missing arguments")]
