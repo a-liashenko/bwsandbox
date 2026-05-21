@@ -1,4 +1,5 @@
 use crate::bwrap::events::{Events, EventsReader, SandboxStatus};
+use crate::bwrap::sigterm::SigTerm;
 use crate::services::{BwrapInfo, Context, Scope, ScopeCleanup, Service};
 use crate::system::{AsFdArg, SharedPipe};
 use crate::{error::AppError, utils};
@@ -62,7 +63,7 @@ impl BwrapProcBuilder {
             services_scope.merge(scope);
         }
 
-        let cleanup = ScopeCleanup::new(vec![services_scope])?;
+        let cleanup = ScopeCleanup::new(vec![services_scope]);
         Ok(cleanup)
     }
 
@@ -121,11 +122,13 @@ impl BwrapProc {
     }
 
     pub fn wait(mut self) -> Result<ExitStatus, AppError> {
+        let sig = SigTerm::register()?;
+
         // Notify bwrap to start sandboxed app
         self.ready
             .write(&[1])
             .map_err(AppError::io("bwrap ready write"))?;
-        let status = self.wait_exit_event()?;
+        let status = self.wait_exit_event(&sig)?;
 
         self.proc
             .wait()
@@ -133,15 +136,22 @@ impl BwrapProc {
         Ok(status)
     }
 
-    fn wait_exit_event(&mut self) -> Result<ExitStatus, AppError> {
+    fn wait_exit_event(&mut self, sig: &SigTerm) -> Result<ExitStatus, AppError> {
         use std::io::ErrorKind;
 
         loop {
             let status = match self.reader.try_next::<Events>() {
                 Ok(Events::Exit(status)) => status.exit_code,
                 Err(AppError::Io(ctx, e)) if e.kind() == ErrorKind::UnexpectedEof => {
-                    tracing::warn!("Bwrap crashed? Context: {ctx}");
-                    return Err(AppError::io("Bwrap unexpected exit")(e));
+                    if !sig.is_terminated() {
+                        tracing::warn!("Bwrap crashed? Context: {ctx}");
+                        return Err(AppError::io("Bwrap unexpected exit")(e));
+                    }
+
+                    tracing::info!("App was terminated");
+                    linux_raw_sys::general::SIGINT
+                        .try_into()
+                        .expect("SIGINT u32 -> i32")
                 }
                 Ok(e) => {
                     tracing::warn!("Unhandled bwrap event {e:?}");
