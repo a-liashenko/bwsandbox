@@ -57,14 +57,13 @@ impl<C: Context> Service<C> for Slirp4netns {
             .arg_fd(self.ready.share_tx()?)?
             .arg(info.sandbox.child_pid.to_string())
             .arg(&self.if_name);
-        tracing::info!("Slirp4netns command: {:?}", self.command);
 
         if self.with_dev {
             nsfix::pre_exec_enter_ns(&mut self.command, info)?;
             self.command.arg("--userns-path=/proc/self/ns/user");
         }
 
-        tracing::trace!("CMD {:?}", self.command);
+        tracing::info!("CMD {:?}", self.command);
         let child = self
             .command
             .spawn()
