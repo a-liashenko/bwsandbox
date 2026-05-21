@@ -1,21 +1,21 @@
 # Simple config
 
 # Get lsb release from sandbox
-# cargo run -- -f ./profiles/simple.toml -- cat /etc/os-release
+# bwsandbox -f ./profiles/simple.toml -- cat /etc/os-release
 
 # Get os release from sandbox
-# cargo run -- -f ./profiles/simple.toml -- cat /etc/lsb-release
+# bwsandbox -f ./profiles/simple.toml -- cat /etc/lsb-release
 
 # Example seccomp filter, ls will return error if enabled
 # Comment [seccomp] section to disable seccomp restrictions
-# cargo run -- -f ./profiles/simple.toml -- ls /etc
+# bwsandbox -f ./profiles/simple.toml -- ls /etc
 
 # Example dbus filter, only org.freedesktop.DBus allowed
 # Comment [dbus] section to disabled dbus proxy
-# cargo run -- -f ./profiles/simple.toml -- dbus-send --type=method_call --print-reply --dest=org.freedesktop.DBus / org.freedesktop.DBus.ListNames
+# bwsandbox -f ./profiles/simple.toml -- dbus-send --type=method_call --print-reply --dest=org.freedesktop.DBus / org.freedesktop.DBus.ListNames
 
 # Example env filter, SANDBOX_HELLO var will be present in sandbox because env_mapper executed BEFORE bwrap args
-# cargo run -- -f ./profiles/simple.toml -- env
+# bwsandbox -f ./profiles/simple.toml -- env
 
 # Required
 [bwrap]
