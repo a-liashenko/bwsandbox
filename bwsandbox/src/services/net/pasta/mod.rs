@@ -2,14 +2,20 @@ use super::resolv_conf::{ResolvConf, ResolvConfVal};
 use crate::services::{BwrapInfo, Context, HandleType, Scope, Service};
 use crate::{config::Cmd, error::AppError, utils};
 use serde::Deserialize;
-use std::process::Command;
+use std::process::{Command, Stdio};
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
     #[serde(default)]
     pub resolv_conf: ResolvConfVal,
+    #[serde(default = "default_quiet")]
+    pub quiet: bool,
     #[serde(flatten)]
     pub cmd: Cmd,
+}
+
+fn default_quiet() -> bool {
+    true
 }
 
 #[derive(Debug)]
@@ -27,6 +33,10 @@ impl Pasta {
         // Make pasta process foreground for easy tracking from parent process
         command.arg("--foreground");
         command.args(args);
+        if config.quiet {
+            command.stdout(Stdio::null());
+            command.stderr(Stdio::null());
+        }
 
         let resolv_conf = config.resolv_conf.generate()?;
         Ok(Self {
@@ -65,7 +75,7 @@ impl<C: Context> Service<C> for Pasta {
         };
         self.command.arg(arg);
 
-        tracing::trace!("pasta cmd: {:?}", self.command);
+        tracing::info!("CMD: {:?}", self.command);
         let child = self
             .command
             .spawn()

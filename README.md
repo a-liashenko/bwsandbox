@@ -32,11 +32,11 @@ bwsandbox [--flags] -- app --arg1 arg2
 
 Example command: `bwsandbox -n generic -- ls -halt`  
 App will try to load `$XDG_CONFIG_HOME/bwsandbox/generic.toml` profile and launch `ls -halt` inside bwrap sandbox.  
-More info about arguments: [args.rs](./src/app/args.rs)
+More info about arguments: [args.rs](./bwsandbox/src/app/args.rs)
 
 ### Profile structure
 
-Profiles folder has a [simple profile](./profiles/simple.toml) example to understand how profiles are composed and a [generic profile](./profiles/generic.toml) with more complex configuration. More synthetic examples can be found in the [tests](./src/tests/profiles) folder.  
+Profiles folder has a [simple profile](./profiles/simple.toml) example to understand how profiles are composed and a [generic profile](./profiles/generic.toml) with more complex configuration. More synthetic examples can be found in the [tests](./bwsandbox/src/tests/profiles) folder.  
 A new profile consists of a configuration .toml file and .jinja template for complex argument composition.
 
 ```toml

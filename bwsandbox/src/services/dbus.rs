@@ -32,7 +32,6 @@ impl DbusService {
             .arg(cfg.user_bus.as_inner())
             .arg(cfg.proxy_bus.as_inner())
             .args(args);
-        tracing::info!("dbus proxy command {command:?}");
 
         Ok(Self {
             command,
@@ -56,8 +55,8 @@ impl<C: Context> Service<C> for DbusService {
         Ok(Scope::new().remove_file(&self.proxy_bus))
     }
 
-    #[tracing::instrument]
     fn start(mut self: Box<Self>, _: &BwrapInfo) -> Result<HandleType, AppError> {
+        tracing::info!("Service CMD: {:?}", self.command);
         let child = self
             .command
             .stdin(Stdio::null())
