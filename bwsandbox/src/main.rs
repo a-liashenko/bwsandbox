@@ -1,5 +1,6 @@
 use std::process::{ExitCode, ExitStatus};
-use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
+use tracing::level_filters::LevelFilter;
+use tracing_subscriber::{Layer, layer::SubscriberExt, util::SubscriberInitExt};
 
 mod app;
 mod bwrap;
@@ -14,21 +15,7 @@ mod utils;
 mod tests;
 
 fn main() -> ExitCode {
-    // If NO_COLOR not set or invalid => enable colors
-    let no_color = std::env::var("NO_COLOR").is_ok();
-    tracing_subscriber::registry()
-        .with(
-            tracing_subscriber::fmt::layer()
-                .with_ansi(!no_color)
-                .with_level(true)
-                .with_file(true)
-                .with_line_number(true)
-                .with_timer(tracing_subscriber::fmt::time::uptime())
-                .with_target(true),
-        )
-        .with(EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("warn")))
-        .init();
-
+    setup_log();
     let args = match app::Args::from_iter(std::env::args_os()) {
         Ok(v) => v,
         Err(e) => {
@@ -43,6 +30,29 @@ fn main() -> ExitCode {
     }
 
     ExitCode::SUCCESS
+}
+
+fn setup_log() {
+    // If NO_COLOR not set or invalid => enable colors
+    let no_color = std::env::var("NO_COLOR").is_ok();
+
+    // Make log filter a bit dumber to reduce final binary size
+    // EnvFilter will trigger regex and increase binary size by ~300kb
+    let level = std::env::var("RUST_LOG")
+        .ok()
+        .and_then(|v| v.parse::<tracing::Level>().ok())
+        .unwrap_or(tracing::Level::WARN);
+
+    let layer = tracing_subscriber::fmt::layer()
+        .with_ansi(!no_color)
+        .with_level(true)
+        .with_file(true)
+        .with_line_number(true)
+        .with_timer(tracing_subscriber::fmt::time::uptime())
+        .with_target(true)
+        .with_filter(LevelFilter::from_level(level));
+
+    tracing_subscriber::registry().with(layer).init();
 }
 
 fn run(args: app::Args) -> Result<ExitStatus, error::AppError> {
