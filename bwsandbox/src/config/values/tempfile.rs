@@ -1,4 +1,4 @@
-use crate::utils::{APP_NAME, sandbox_id, temp_dir};
+use crate::utils::{sandbox_id, temp_dir};
 use serde::Deserialize;
 use std::path::{Path, PathBuf};
 
@@ -8,7 +8,7 @@ pub struct TempFileVal(PathBuf);
 
 impl TempFileVal {
     pub fn new(context: &str) -> Self {
-        let name = format!("{APP_NAME}-{context}-{}", sandbox_id());
+        let name = format!("{context}-{}", sandbox_id());
         Self(temp_dir().join(name))
     }
 
