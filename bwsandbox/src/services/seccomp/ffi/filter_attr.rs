@@ -29,8 +29,8 @@ pub enum FilterAttr {
 }
 
 impl FilterAttr {
-    pub fn raw(&self) -> c_int {
-        *self as _
+    pub fn raw(self) -> c_int {
+        self as _
     }
 }
 
@@ -43,7 +43,7 @@ pub enum FilterAttrOptimize {
 }
 
 impl FilterAttrOptimize {
-    pub fn raw(&self) -> u32 {
-        *self as _
+    pub fn raw(self) -> u32 {
+        self as _
     }
 }
