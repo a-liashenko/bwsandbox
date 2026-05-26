@@ -2,6 +2,11 @@
 resolver = "3"
 members = ["bwsandbox", "bwsandbox-netns"]
 
+[workspace.lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+unreadable_literal = "allow"
+missing_errors_doc = "allow"
+
 [workspace.dependencies]
 rustix = { version = "1.1", default-features = false }
 serde = { version = "1.0", default-features = false }
@@ -13,3 +18,4 @@ lto = "fat"
 codegen-units = 1
 panic = "abort"
 strip = true
+opt-level = "z"

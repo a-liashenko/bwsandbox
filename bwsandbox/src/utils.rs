@@ -5,6 +5,8 @@ use std::{
 
 use crate::error::AppError;
 
+pub const RAND_ALPHABET: &[u8] = b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
 pub const APP_NAME: &str = env!("CARGO_CRATE_NAME");
 pub const BWRAP_CMD: &str = "bwrap";
 pub const DBUS_CMD: &str = "xdg-dbus-proxy";
@@ -20,7 +22,12 @@ pub fn sandbox_id() -> &'static str {
 }
 
 pub fn rand_id(len: usize) -> String {
-    nanoid::nanoid!(len, &nanoid::alphabet::HEX_UPPERCASE)
+    let mut bytes = vec![0u8; len];
+    getrandom::fill(&mut bytes).expect("Random not avail?");
+    bytes
+        .iter()
+        .map(|el| RAND_ALPHABET[*el as usize % RAND_ALPHABET.len()] as char)
+        .collect()
 }
 
 pub fn temp_dir() -> PathBuf {
@@ -53,4 +60,15 @@ pub fn poll_file(path: &Path, poll: Duration, total: Duration) -> Result<bool, A
 
 pub fn deserialize<T: serde::de::DeserializeOwned>(s: &str) -> Result<T, toml::de::Error> {
     toml::from_str(s)
+}
+
+#[test]
+fn test_rand_id() {
+    let size = 32;
+    let id = rand_id(size);
+    assert_eq!(id.len(), size);
+
+    for ch in id.chars() {
+        assert!(RAND_ALPHABET.contains(&(ch as u8)))
+    }
 }
