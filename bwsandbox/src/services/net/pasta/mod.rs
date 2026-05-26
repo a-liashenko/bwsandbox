@@ -48,6 +48,10 @@ impl Pasta {
 }
 
 impl<C: Context> Service<C> for Pasta {
+    fn name(&self) -> &'static str {
+        "pasta network"
+    }
+
     fn apply_before(&mut self, ctx: &mut C) -> Result<Scope, AppError> {
         // TODO: Find better solution to avoid datarace, iterating ALL args can be pretty slow and error prone
         self.with_dev = ctx.arg_exist_before("--dev");
@@ -75,7 +79,7 @@ impl<C: Context> Service<C> for Pasta {
         };
         self.command.arg(arg);
 
-        log::info!("CMD: {:?}", self.command);
+        crate::print_command::print_command(&self.command);
         let child = self
             .command
             .spawn()

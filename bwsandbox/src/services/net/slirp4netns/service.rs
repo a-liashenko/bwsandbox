@@ -38,6 +38,10 @@ impl Slirp4netns {
 }
 
 impl<C: Context> Service<C> for Slirp4netns {
+    fn name(&self) -> &'static str {
+        "slirp4netns network"
+    }
+
     fn apply_before(&mut self, ctx: &mut C) -> Result<Scope, AppError> {
         self.with_dev = ctx.arg_exist_before("--dev");
         Ok(Scope::new())
@@ -63,7 +67,7 @@ impl<C: Context> Service<C> for Slirp4netns {
             self.command.arg("--userns-path=/proc/self/ns/user");
         }
 
-        log::info!("CMD {:?}", self.command);
+        crate::print_command::print_command(&self.command);
         let child = self
             .command
             .spawn()

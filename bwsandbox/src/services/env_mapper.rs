@@ -26,6 +26,10 @@ fn unset_all_default() -> bool {
 }
 
 impl<C: Context> Service<C> for EnvMapper {
+    fn name(&self) -> &'static str {
+        "env_mapper"
+    }
+
     fn apply_before(&mut self, ctx: &mut C) -> Result<Scope, AppError> {
         if self.unset_all {
             ctx.command_mut().arg("--clearenv");

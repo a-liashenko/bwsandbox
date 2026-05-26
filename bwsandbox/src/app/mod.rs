@@ -33,10 +33,12 @@ impl App {
 
         let proc = bwrap_builder.spawn(args.app, args.app_args)?;
         let proc_status = proc.bwrap_info();
-        log::trace!("bwrap info {proc_status:?}");
         let _handles = services
             .into_iter()
-            .filter_map(|v| v.start(&proc_status).transpose())
+            .filter_map(|v| {
+                log::info!("Starting '{}' service", v.name());
+                v.start(&proc_status).transpose()
+            })
             .collect::<Result<Vec<_>, _>>()?;
 
         let status = proc.wait()?;

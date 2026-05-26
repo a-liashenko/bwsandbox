@@ -114,7 +114,7 @@ inline = [
 # type = 'inline'
 # # Replace content of /etc/resolv.conf with custom settings
 # resolv_conf = "nameserver 1.1.1.1"
-# Extra flag to suppress ALL output from pasta, default true
+# # Extra flag to suppress ALL output from pasta, default true
 # quiet = true
 # inline = [
 #     # 

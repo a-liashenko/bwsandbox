@@ -42,6 +42,10 @@ impl DbusService {
 }
 
 impl<C: Context> Service<C> for DbusService {
+    fn name(&self) -> &'static str {
+        "xdg-dbus-proxy"
+    }
+
     fn apply_before(&mut self, _ctx: &mut C) -> Result<Scope, AppError> {
         Ok(Scope::new())
     }
@@ -55,7 +59,7 @@ impl<C: Context> Service<C> for DbusService {
     }
 
     fn start(mut self: Box<Self>, _: &BwrapInfo) -> Result<HandleType, AppError> {
-        log::info!("Service CMD: {:?}", self.command);
+        crate::print_command::print_command(&self.command);
         let child = self
             .command
             .stdin(Stdio::null())

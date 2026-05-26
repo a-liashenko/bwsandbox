@@ -10,6 +10,7 @@ pub struct BwrapInfo {
 }
 
 pub trait Service<C: Context> {
+    fn name(&self) -> &'static str;
     fn apply_before(&mut self, ctx: &mut C) -> Result<Scope, AppError>;
     fn apply_after(&mut self, ctx: &mut C) -> Result<Scope, AppError>;
     fn start(self: Box<Self>, status: &BwrapInfo) -> Result<HandleType, AppError>;

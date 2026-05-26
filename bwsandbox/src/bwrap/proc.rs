@@ -78,7 +78,7 @@ impl BwrapProcBuilder {
             .arg_fd(self.info.share_tx()?)?;
 
         self.command.arg(app).args(args);
-        log::info!("Bwrap command: {:?}", self.command);
+        crate::print_command::print_command(&self.command);
 
         let proc = self
             .command

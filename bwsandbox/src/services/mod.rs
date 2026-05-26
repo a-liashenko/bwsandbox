@@ -26,6 +26,7 @@ pub struct ServicesConfig {
 
 impl ServicesConfig {
     pub fn load<C: Context>(self) -> Result<Vec<BoxedService<C>>, AppError> {
+        log::info!("---- initializing services ----");
         let services = vec![
             Self::load_single(self.dbus, dbus::DbusService::from_config)?,
             Self::load_single(self.env_mapper, env_mapper::EnvMapper::from_config)?,
@@ -46,6 +47,7 @@ impl ServicesConfig {
         if let Some(entry) = cfg {
             let config = entry.load(crate::utils::deserialize)?;
             let service = build(config)?;
+            log::info!("'{}' initialized", service.name());
             let service = Box::new(service) as BoxedService<Ctx>;
             return Ok(Some(service));
         }

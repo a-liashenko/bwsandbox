@@ -57,6 +57,10 @@ impl SeccompService {
 }
 
 impl<C: Context> Service<C> for SeccompService {
+    fn name(&self) -> &'static str {
+        "seccomp filter"
+    }
+
     fn apply_before(&mut self, _ctx: &mut C) -> Result<Scope, AppError> {
         Ok(Scope::new())
     }

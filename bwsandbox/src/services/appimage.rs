@@ -23,6 +23,10 @@ impl AppImageExtract {
 }
 
 impl<C: Context> Service<C> for AppImageExtract {
+    fn name(&self) -> &'static str {
+        "appimage extract"
+    }
+
     fn apply_before(&mut self, _: &mut C) -> Result<Scope, AppError> {
         Ok(Scope::new())
     }

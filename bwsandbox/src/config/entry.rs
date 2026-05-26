@@ -21,7 +21,7 @@ impl<T: DeserializeOwned> Entry<T> {
             Entry::Include { include } => include.into_inner(),
         };
 
-        log::info!("-- Loading nested config: {:?}", path.canonicalize());
+        log::trace!("Loading nested config: {:?}", path.canonicalize());
         let content = std::fs::read_to_string(&path).map_err(AppError::file(&path))?;
         let item = loader(&content).map_err(Into::into)?;
         Ok(item)
