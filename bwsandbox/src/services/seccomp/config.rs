@@ -1,4 +1,4 @@
-use super::ffi::{Action, Arch, Syscall};
+use super::ffi::{Action, Arch, FilterAttrOptimize, Syscall};
 use serde::{Deserialize, Deserializer, de::Error};
 
 #[derive(Debug, Deserialize)]
@@ -6,6 +6,8 @@ pub struct Config {
     pub default_action: Action,
     pub extra_arch: Vec<Arch>,
     pub rules: Vec<Rule>,
+    #[serde(default)]
+    pub optimize: Option<FilterAttrOptimize>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -40,6 +42,7 @@ impl<'de> Deserialize<'de> for Arch {
 fn test_parse_seccomp() {
     let seccomp = toml::toml! {
         default_action = "SCMP_ACT_KILL"
+        optimize = "BINARY_TREE"
         extra_arch = ["x86"]
         rules = [
             { action = "SCMP_ACT_ERRNO", syscalls = ["open", "close"] },

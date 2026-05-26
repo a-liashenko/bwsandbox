@@ -4,6 +4,10 @@ default_action = "SCMP_ACT_ALLOW"
 # Required, can be empty
 extra_arch = ["x86"]
 
+# Optional, can be empty
+# Variants: PRIORITY_AND_COMPLEXITY (default value for libseccomp), BINARY_TREE
+optimize = "BINARY_TREE"
+
 [[rules]]
 action = "SCMP_ACT_ERRNO"
 # Block dir read syscall

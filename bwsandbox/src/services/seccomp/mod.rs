@@ -36,6 +36,12 @@ impl SeccompService {
             }
         }
 
+        if let Some(optimize) = cfg.optimize {
+            filter
+                .attr_set_optimize(optimize)
+                .map_err(AppError::SeccompLib)?;
+        }
+
         // Use in-memory(?) temp file, it will be cleaned by OS
         let mut fd = tempfile::tempfile().map_err(AppError::FileTempAlloc)?;
         filter
