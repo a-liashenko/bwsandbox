@@ -85,12 +85,12 @@ Extra args added to bwrap:
 `--symlink` - symlink xdg-dbus-proxy socket from temp dir into sandbox /run dir
 
 **slirp4netns** - host network isolation  
-Extra args added to bwrap:
+Extra args added to bwrap:  
 `--unshare-net` - disable host network in sandbox, network will be handled by slirp4netns
 
-**pasta** - host network isolation alternative
-Extra args added to bwrap:
-`--unshare-net` - disable host network in sandbox, network will be handled by slirp4netns
+**pasta** - host network isolation alternative  
+Extra args added to bwrap:  
+`--unshare-net` - disable host network in sandbox, network will be handled by pasta
 
 **appimage** - appimage support  
 Extra args added to bwrap:  
