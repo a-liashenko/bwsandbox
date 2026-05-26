@@ -1,10 +1,12 @@
 mod action;
 mod arch;
+mod filter_attr;
 mod filter_ctx;
 mod syscall;
 
 pub use action::Action;
 pub use arch::Arch;
+pub use filter_attr::FilterAttrOptimize;
 pub use filter_ctx::FilterCtx;
 pub use syscall::Syscall;
 
@@ -38,6 +40,8 @@ unsafe extern "C" {
         arg_cnt: c_uint,
         ...
     ) -> c_int;
+
+    fn seccomp_attr_set(ctx: *mut c_void, attr: c_int, val: u32) -> c_int;
 
 }
 

@@ -1,4 +1,4 @@
-use super::{Action, Arch, Syscall, Version};
+use super::{Action, Arch, FilterAttrOptimize, Syscall, Version};
 use anyhow::ensure;
 use std::{ffi::c_void, fs::File, os::fd::AsRawFd, ptr};
 
@@ -23,6 +23,16 @@ impl FilterCtx {
 
         let res = unsafe { seccomp_rule_add(self.0, act.as_uint(), syscall.raw(), 0) };
         ensure!(res == 0, "seccomp_rule_add: {res}");
+        Ok(())
+    }
+
+    #[tracing::instrument]
+    pub fn attr_set_optimize(&mut self, val: FilterAttrOptimize) -> anyhow::Result<()> {
+        use super::filter_attr::FilterAttr;
+        use super::seccomp_attr_set;
+
+        let res = unsafe { seccomp_attr_set(self.0, FilterAttr::CtlOptimize.raw(), val.raw()) };
+        ensure!(res == 0, "seccomp_attr_set: {res}");
         Ok(())
     }
 
