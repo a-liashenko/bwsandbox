@@ -49,6 +49,12 @@ impl Config {
         let path = PathBuf::from(path)
             .canonicalize()
             .map_err(AppError::io("Failed to get full path for bwsandbox"))?;
+
+        let meta = std::fs::metadata(&path).map_err(AppError::BwsandboxMeta)?;
+        if meta.uid() != 0 || meta.mode() & 0o022 != 0 {
+            return Err(AppError::BwsandboxPermissions);
+        }
+
         Ok(path)
     }
 }
