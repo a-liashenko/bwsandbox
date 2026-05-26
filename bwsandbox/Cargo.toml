@@ -1,8 +1,8 @@
 [package]
 name = "bwsandbox"
-version = "0.5.1"
-edition = "2024"
-license = "GPL-3.0-or-later"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
 
 [lints]
 workspace = true
