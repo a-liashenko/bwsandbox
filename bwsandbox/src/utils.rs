@@ -5,7 +5,8 @@ use std::{
 
 use crate::error::AppError;
 
-pub const RAND_ALPHABET: &[u8] = b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+pub const RAND_ALPHABET: &[u8] =
+    b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_";
 
 pub const APP_NAME: &str = env!("CARGO_CRATE_NAME");
 pub const BWRAP_CMD: &str = "bwrap";
