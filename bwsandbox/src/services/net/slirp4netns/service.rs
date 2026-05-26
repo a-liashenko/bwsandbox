@@ -74,7 +74,7 @@ impl<C: Context> Service<C> for Slirp4netns {
             .map_err(AppError::spawn(utils::SLIRP4NETNS_CMD))?;
 
         let mut rx = self.ready.into_rx();
-        match rx.try_read_ext::<1>(utils::READY_TIMEOUT) {
+        match rx.try_read_buf_ext::<1>(utils::READY_TIMEOUT) {
             Ok(_) => Ok(HandleType::new(child)),
             Err(e) => Err(AppError::io("Failed to read slirp4netns ready")(e)),
         }
