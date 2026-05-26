@@ -4,10 +4,8 @@ version = "0.5.1"
 edition = "2024"
 license = "GPL-3.0-or-later"
 
-[lints.clippy]
-pedantic = { level = "warn", priority = -1 }
-unreadable_literal = "allow"
-missing_errors_doc = "allow"
+[lints]
+workspace = true
 
 [dependencies]
 rustix = { workspace = true, features = ["process", "thread", "mount", "std"], default-features = false }
