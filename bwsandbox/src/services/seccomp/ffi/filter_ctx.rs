@@ -6,7 +6,6 @@ use std::{ffi::c_void, fs::File, os::fd::AsRawFd, ptr};
 pub struct FilterCtx(*mut c_void);
 
 impl FilterCtx {
-    #[tracing::instrument]
     pub fn new(def_action: Action) -> anyhow::Result<Self> {
         use super::seccomp_init;
 
@@ -17,7 +16,6 @@ impl FilterCtx {
         Ok(Self(ptr))
     }
 
-    #[tracing::instrument]
     pub fn rule_add(&mut self, act: Action, syscall: Syscall) -> anyhow::Result<()> {
         use super::seccomp_rule_add;
 
@@ -26,7 +24,6 @@ impl FilterCtx {
         Ok(())
     }
 
-    #[tracing::instrument]
     pub fn attr_set_optimize(&mut self, val: FilterAttrOptimize) -> anyhow::Result<()> {
         use super::filter_attr::FilterAttr;
         use super::seccomp_attr_set;
@@ -36,7 +33,6 @@ impl FilterCtx {
         Ok(())
     }
 
-    #[tracing::instrument]
     pub fn arch_add(&mut self, arch: Arch) -> anyhow::Result<()> {
         use super::seccomp_arch_add;
 
@@ -54,7 +50,6 @@ impl FilterCtx {
         Ok(())
     }
 
-    #[tracing::instrument]
     pub fn export_bpf(&self, file: &mut File) -> anyhow::Result<()> {
         use super::seccomp_export_bpf;
 

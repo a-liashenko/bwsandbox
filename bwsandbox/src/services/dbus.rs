@@ -46,7 +46,6 @@ impl<C: Context> Service<C> for DbusService {
         Ok(Scope::new())
     }
 
-    #[tracing::instrument]
     fn apply_after(&mut self, ctx: &mut C) -> Result<Scope, AppError> {
         ctx.command_mut()
             .arg("--symlink")
@@ -56,7 +55,7 @@ impl<C: Context> Service<C> for DbusService {
     }
 
     fn start(mut self: Box<Self>, _: &BwrapInfo) -> Result<HandleType, AppError> {
-        tracing::info!("Service CMD: {:?}", self.command);
+        log::info!("Service CMD: {:?}", self.command);
         let child = self
             .command
             .stdin(Stdio::null())

@@ -6,7 +6,6 @@ use std::env::VarError;
 pub struct EnvVal<T>(T);
 
 impl<T: From<String>> EnvVal<T> {
-    #[tracing::instrument]
     pub fn resolve(val: String) -> Result<Self, shellexpand::LookupError<VarError>> {
         let value = shellexpand::env(&val)?;
         let value = match value {
@@ -26,7 +25,6 @@ impl<T: From<String>> EnvVal<T> {
 }
 
 impl<'de, T: From<String>> Deserialize<'de> for EnvVal<T> {
-    #[tracing::instrument(skip_all)]
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,

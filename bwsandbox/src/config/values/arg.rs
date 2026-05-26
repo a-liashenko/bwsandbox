@@ -22,7 +22,6 @@ impl AsRef<OsStr> for ArgVal {
 }
 
 impl ArgVal {
-    #[tracing::instrument]
     pub fn to_str(&self) -> Cow<'_, str> {
         match self {
             ArgVal::Str { value } => Cow::Borrowed(value),
@@ -33,7 +32,6 @@ impl ArgVal {
 }
 
 impl Serialize for ArgVal {
-    #[tracing::instrument(skip_all)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,

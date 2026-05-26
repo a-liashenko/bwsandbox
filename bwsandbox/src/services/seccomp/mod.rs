@@ -61,13 +61,11 @@ impl<C: Context> Service<C> for SeccompService {
         Ok(Scope::new())
     }
 
-    #[tracing::instrument]
     fn apply_after(&mut self, ctx: &mut C) -> Result<Scope, AppError> {
         ctx.command_mut().arg("--seccomp").arg_fd(&self.fd)?;
         Ok(Scope::new())
     }
 
-    #[tracing::instrument]
     fn start(self: Box<Self>, _: &BwrapInfo) -> Result<HandleType, AppError> {
         Ok(HandleType::None)
     }

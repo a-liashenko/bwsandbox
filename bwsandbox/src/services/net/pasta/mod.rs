@@ -75,7 +75,7 @@ impl<C: Context> Service<C> for Pasta {
         };
         self.command.arg(arg);
 
-        tracing::info!("CMD: {:?}", self.command);
+        log::info!("CMD: {:?}", self.command);
         let child = self
             .command
             .spawn()

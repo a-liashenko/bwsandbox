@@ -14,7 +14,6 @@ impl Syscall {
         self.0
     }
 
-    #[tracing::instrument]
     pub fn from_str(name: &str) -> anyhow::Result<Self> {
         use super::{__NR_SCMP_ERROR, seccomp_syscall_resolve_name};
 

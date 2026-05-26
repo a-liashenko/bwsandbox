@@ -115,7 +115,7 @@ fn test_dbus() {
         .filter(|line| line.contains("string \""))
         .filter_map(|line| line.split('"').nth(1))
         // Skip empty services and/or connections
-        .filter(|name| !name.is_empty() && !name.starts_with(":"))
+        .filter(|name| !name.is_empty() && !name.starts_with(':'))
         .collect::<Vec<_>>();
     assert!(output.status.success());
     assert_eq!(names.len(), 1);

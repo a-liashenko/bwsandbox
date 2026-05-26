@@ -60,7 +60,7 @@ impl Version {
 
     pub fn verify_version(&self, major: c_uint, minor: c_uint) {
         if self.major < major || self.minor < minor {
-            tracing::error!("libseccomp >= {major}.{minor} required");
+            log::error!("libseccomp >= {major}.{minor} required");
             std::process::exit(1)
         }
     }
