@@ -45,15 +45,15 @@ impl<T: AsFd> PipePart<T> {
 }
 
 impl<T: AsFd + Read> ReadExt for PipePart<T> {
-    fn read_ext<const B: usize>(&mut self) -> Result<(usize, [u8; B]), std::io::Error> {
-        self.borrow_part_mut().read_ext()
+    fn read_buf_ext<const B: usize>(&mut self) -> Result<(usize, [u8; B]), std::io::Error> {
+        self.borrow_part_mut().read_buf_ext()
     }
 
-    fn try_read_ext<const B: usize>(
+    fn try_read_buf_ext<const B: usize>(
         &mut self,
         timeout: Duration,
     ) -> Result<(usize, [u8; B]), std::io::Error> {
-        self.borrow_part_mut().try_read_ext(timeout)
+        self.borrow_part_mut().try_read_buf_ext(timeout)
     }
 }
 

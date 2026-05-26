@@ -38,6 +38,10 @@ impl Slirp4netns {
 }
 
 impl<C: Context> Service<C> for Slirp4netns {
+    fn name(&self) -> &'static str {
+        "slirp4netns network"
+    }
+
     fn apply_before(&mut self, ctx: &mut C) -> Result<Scope, AppError> {
         self.with_dev = ctx.arg_exist_before("--dev");
         Ok(Scope::new())
@@ -63,14 +67,14 @@ impl<C: Context> Service<C> for Slirp4netns {
             self.command.arg("--userns-path=/proc/self/ns/user");
         }
 
-        tracing::info!("CMD {:?}", self.command);
+        crate::print_command::print_command(&self.command);
         let child = self
             .command
             .spawn()
             .map_err(AppError::spawn(utils::SLIRP4NETNS_CMD))?;
 
         let mut rx = self.ready.into_rx();
-        match rx.try_read_ext::<1>(utils::READY_TIMEOUT) {
+        match rx.try_read_buf_ext::<1>(utils::READY_TIMEOUT) {
             Ok(_) => Ok(HandleType::new(child)),
             Err(e) => Err(AppError::io("Failed to read slirp4netns ready")(e)),
         }

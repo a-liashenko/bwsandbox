@@ -27,10 +27,9 @@ impl Scope {
     }
 
     fn cleanup(self) {
-        let _guard = tracing::error_span!("[scope cleanup]").entered();
         for it in self.remove {
             if let Err(e) = std::fs::remove_file(&it) {
-                tracing::error!("Failed to remove file {it:?}: {e}");
+                log::error!("Failed to remove file {}: {e}", it.display());
             }
         }
     }
@@ -49,7 +48,7 @@ impl ScopeCleanup {
 
 impl Drop for ScopeCleanup {
     fn drop(&mut self) {
-        tracing::trace!("Removing all scoped resources: {:?}", self.scopes);
+        log::trace!("Drop scopes: {:#?}", self.scopes);
         let scopes = std::mem::take(&mut self.scopes);
         scopes.into_iter().for_each(Scope::cleanup);
     }

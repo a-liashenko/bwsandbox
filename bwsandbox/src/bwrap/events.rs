@@ -58,10 +58,10 @@ impl<T: std::io::Read> EventsReader<T> {
             .read_line(&mut line)
             .map_err(AppError::io("bwrap status"))?;
 
-        tracing::trace!("Bwrap raw event: {line}");
+        log::trace!("Bwrap raw event: {}", line.trim_end());
 
         if next == 0 {
-            tracing::info!("Unexpected EOF from bwrap --json-status-fd");
+            log::info!("Unexpected EOF from bwrap --json-status-fd");
             return AppError::io("bwrap eof")(UnexpectedEof.into()).into_err();
         }
 

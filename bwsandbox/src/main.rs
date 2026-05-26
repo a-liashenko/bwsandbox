@@ -1,6 +1,4 @@
 use std::process::{ExitCode, ExitStatus};
-use tracing::level_filters::LevelFilter;
-use tracing_subscriber::{Layer, layer::SubscriberExt, util::SubscriberInitExt};
 
 mod app;
 mod bwrap;
@@ -11,6 +9,7 @@ mod system;
 mod temp_dir;
 mod utils;
 
+mod print_command;
 #[cfg(test)]
 mod tests;
 
@@ -33,26 +32,16 @@ fn main() -> ExitCode {
 }
 
 fn setup_log() {
+    use env_logger::WriteStyle;
+
     // If NO_COLOR not set or invalid => enable colors
-    let no_color = std::env::var("NO_COLOR").is_ok();
+    let style = std::env::var("NO_COLOR").map_or(WriteStyle::Always, |_| WriteStyle::Never);
 
-    // Make log filter a bit dumber to reduce final binary size
-    // EnvFilter will trigger regex and increase binary size by ~300kb
-    let level = std::env::var("RUST_LOG")
-        .ok()
-        .and_then(|v| v.parse::<tracing::Level>().ok())
-        .unwrap_or(tracing::Level::WARN);
-
-    let layer = tracing_subscriber::fmt::layer()
-        .with_ansi(!no_color)
-        .with_level(true)
-        .with_file(true)
-        .with_line_number(true)
-        .with_timer(tracing_subscriber::fmt::time::uptime())
-        .with_target(true)
-        .with_filter(LevelFilter::from_level(level));
-
-    tracing_subscriber::registry().with(layer).init();
+    env_logger::builder()
+        .write_style(style)
+        .format_source_path(true)
+        .format_target(false)
+        .init();
 }
 
 fn run(args: app::Args) -> Result<ExitStatus, error::AppError> {
@@ -62,8 +51,8 @@ fn run(args: app::Args) -> Result<ExitStatus, error::AppError> {
 }
 
 fn print_error(e: &error::AppError) {
-    tracing::info!("{e:#?}");
-    tracing::error!("{}", e.to_string());
+    log::info!("{e:#?}");
+    log::error!("{e}");
 }
 
 fn print_help() -> ExitCode {

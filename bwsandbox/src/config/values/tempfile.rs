@@ -1,4 +1,4 @@
-use crate::utils::{APP_NAME, sandbox_id, temp_dir};
+use crate::utils::{sandbox_id, temp_dir};
 use serde::Deserialize;
 use std::path::{Path, PathBuf};
 
@@ -7,9 +7,8 @@ use std::path::{Path, PathBuf};
 pub struct TempFileVal(PathBuf);
 
 impl TempFileVal {
-    #[tracing::instrument]
     pub fn new(context: &str) -> Self {
-        let name = format!("{APP_NAME}-{context}-{}", sandbox_id());
+        let name = format!("{context}-{}", sandbox_id());
         Self(temp_dir().join(name))
     }
 
@@ -23,7 +22,6 @@ impl TempFileVal {
 }
 
 impl<'de> Deserialize<'de> for TempFileVal {
-    #[tracing::instrument(skip_all)]
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,

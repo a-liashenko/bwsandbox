@@ -104,9 +104,10 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::similar_names)]
     fn test_ns_parent() {
-        let fir = spawn_unshare();
-        let sec = spawn_unshare();
+        let mut fir = spawn_unshare();
+        let mut sec = spawn_unshare();
 
         let my_ns = Namespace::open_pid(std::process::id(), NamespaceType::User).unwrap();
 
@@ -120,5 +121,10 @@ mod tests {
         assert_ne!(fir_ns.fd_inode().unwrap(), sec_ns.fd_inode().unwrap());
         assert_eq!(fir_pns.fd_inode().unwrap(), my_ns.fd_inode().unwrap());
         assert_eq!(fir_pns.fd_inode().unwrap(), sec_pns.fd_inode().unwrap());
+
+        fir.kill().unwrap();
+        fir.wait().unwrap();
+        sec.kill().unwrap();
+        sec.wait().unwrap();
     }
 }

@@ -65,13 +65,13 @@ pub fn pre_exec_enter_ns(service: &mut Command, info: &BwrapInfo) -> Result<(), 
     let netns = Namespace::open_pid(info.sandbox.child_pid, NamespaceType::Net)?;
     let netns_owner = netns.get_userns()?;
 
-    if tracing::enabled!(tracing::Level::TRACE) {
+    if log::log_enabled!(log::Level::Trace) {
         print_ns_info(info)?;
     }
 
     let pre_exec = move || -> Result<(), std::io::Error> {
         let status = netns_owner.enter();
-        if tracing::enabled!(tracing::Level::TRACE) {
+        if log::log_enabled!(log::Level::Trace) {
             print_pre_exec_info();
             eprintln!("pre_exec status {status:?}");
         }
@@ -87,9 +87,8 @@ pub fn pre_exec_enter_ns(service: &mut Command, info: &BwrapInfo) -> Result<(), 
 
 // Allow simillar names, because they have readable semantic
 #[allow(clippy::similar_names)]
-#[tracing::instrument(skip(info))]
 fn print_ns_info(info: &BwrapInfo) -> Result<(), AppError> {
-    use tracing::trace;
+    use log::trace;
 
     let bwc_netns = Namespace::open_pid(info.sandbox.child_pid, NamespaceType::Net)?;
     let bwc_netns_uns = bwc_netns.get_userns()?;
@@ -115,7 +114,6 @@ fn print_ns_info(info: &BwrapInfo) -> Result<(), AppError> {
     Ok(())
 }
 
-#[tracing::instrument]
 fn print_pre_exec_info() {
     let status = std::fs::read_to_string("/proc/self/status").unwrap_or_default();
     let relevant: String = status
@@ -129,7 +127,7 @@ fn print_pre_exec_info() {
 
     // Use eprintln to avoid potential deadlock with tracing lib
     eprintln!("---- PRE EXEC INFO ----");
-    eprintln!("-- current user ns: {:?}", user_ns);
-    eprintln!("-- current net ns: {:?}", net_ns);
+    eprintln!("-- current user ns: {:?}", user_ns.display());
+    eprintln!("-- current net ns: {:?}", net_ns.display());
     eprintln!("{}", relevant);
 }

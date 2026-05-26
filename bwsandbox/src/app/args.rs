@@ -71,7 +71,6 @@ impl Args {
     }
 }
 
-#[tracing::instrument(skip(parser))]
 fn parse_file(parser: &mut Parser) -> Result<(PathBuf, String), AppError> {
     let path = parser.value()?;
     let content = std::fs::read_to_string(&path).map_err(AppError::file(&path))?;
@@ -81,7 +80,6 @@ fn parse_file(parser: &mut Parser) -> Result<(PathBuf, String), AppError> {
     Ok((path, content))
 }
 
-#[tracing::instrument(skip(parser))]
 fn parse_name(parser: &mut Parser) -> Result<(PathBuf, String), AppError> {
     let mut name = parser.value()?;
     name.push(".toml");
@@ -89,7 +87,6 @@ fn parse_name(parser: &mut Parser) -> Result<(PathBuf, String), AppError> {
     from_name(name)
 }
 
-#[tracing::instrument]
 fn from_name(name: OsString) -> Result<(PathBuf, String), AppError> {
     let config_dir = get_config_dir()?;
     let config_path = PathBuf::from(&config_dir).join(utils::APP_NAME).join(name);
@@ -97,7 +94,6 @@ fn from_name(name: OsString) -> Result<(PathBuf, String), AppError> {
     Ok((config_path, content))
 }
 
-#[tracing::instrument]
 fn from_auto(mut app_name: OsString) -> Result<(PathBuf, String), AppError> {
     app_name.push(".toml");
     from_name(app_name)

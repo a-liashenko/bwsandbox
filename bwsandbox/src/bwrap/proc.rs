@@ -78,7 +78,7 @@ impl BwrapProcBuilder {
             .arg_fd(self.info.share_tx()?)?;
 
         self.command.arg(app).args(args);
-        tracing::info!("Bwrap command: {:?}", self.command);
+        crate::print_command::print_command(&self.command);
 
         let proc = self
             .command
@@ -144,17 +144,17 @@ impl BwrapProc {
                 Ok(Events::Exit(status)) => status.exit_code,
                 Err(AppError::Io(ctx, e)) if e.kind() == ErrorKind::UnexpectedEof => {
                     if !sig.is_terminated() {
-                        tracing::warn!("Bwrap crashed? Context: {ctx}");
+                        log::warn!("Bwrap crashed? Context: {ctx}");
                         return Err(AppError::io("Bwrap unexpected exit")(e));
                     }
 
-                    tracing::info!("App was terminated");
+                    log::info!("App was terminated");
                     linux_raw_sys::general::SIGINT
                         .try_into()
                         .expect("SIGINT u32 -> i32")
                 }
                 Ok(e) => {
-                    tracing::warn!("Unhandled bwrap event {e:?}");
+                    log::warn!("Unhandled bwrap event {e:?}");
                     continue;
                 }
                 Err(e) => return Err(e),
@@ -169,18 +169,18 @@ impl Drop for BwrapProc {
     fn drop(&mut self) {
         let status = match self.proc.try_wait() {
             Ok(None) => {
-                tracing::error!("Early BwrapProc drop? Killing child");
+                log::error!("Early BwrapProc drop? Killing child");
                 self.proc.kill()
             }
             Err(e) => {
-                tracing::error!("Unknown BwrapProc status: {e:?}");
+                log::error!("Unknown BwrapProc status: {e:?}");
                 self.proc.kill()
             }
             _ => return,
         };
-        tracing::info!("bwrap killed with {status:?}");
+        log::info!("bwrap killed with {status:?}");
 
         let wait = self.proc.wait();
-        tracing::info!("bwrap wait after kill {wait:?}");
+        log::info!("bwrap wait after kill {wait:?}");
     }
 }

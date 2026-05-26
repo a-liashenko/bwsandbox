@@ -8,7 +8,8 @@ impl ResolvConfVal {
     pub fn generate(self) -> Result<ResolvConf, AppError> {
         let file = match self.0 {
             Some(v) => {
-                let file = utils::temp_dir().join("pasta_resolv.conf");
+                let file = utils::temp_dir().join("resolv.conf");
+                log::trace!("Create {}", file.display());
                 std::fs::write(&file, v).map_err(AppError::file(&file))?;
                 Some(file)
             }

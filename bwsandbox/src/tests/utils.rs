@@ -22,7 +22,7 @@ impl OutputExtra for Output {
 pub(super) fn cargo_spawn<T: AsRef<OsStr>>(args: Vec<T>) -> Result<Child, std::io::Error> {
     let mut command = cargo_command();
     let child = command
-        .args(args.into_iter())
+        .args(args)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()?;

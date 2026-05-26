@@ -11,6 +11,7 @@ license = "GPL-3.0-or-later"
 pedantic = { level = "warn", priority = -1 }
 unreadable_literal = "allow"
 missing_errors_doc = "allow"
+uninlined_format_args = "allow"
 
 [workspace.dependencies]
 rustix = { version = "1.1", default-features = false }

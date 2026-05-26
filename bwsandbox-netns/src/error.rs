@@ -19,8 +19,12 @@ pub enum AppError {
     ConfigTooBig(u64),
     #[error("Failed to get config meta: {0:?}")]
     ConfigMeta(std::io::Error),
-    #[error("Config file have wrong permissions. Expected: root:root 700")]
+    #[error("Config file have wrong permissions. Expected: root:root 755 at max")]
     ConfigBadPermissions,
+    #[error("Bwsandbox have wrong permissions. Expected root:root 755 at max")]
+    BwsandboxPermissions,
+    #[error("Failed to get bwsandbox meta: {0:?}")]
+    BwsandboxMeta(std::io::Error),
     #[error("Failed to parse config")]
     ConfigParse(toml::de::Error),
     #[error("User {0} not allowed to use it")]

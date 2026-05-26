@@ -5,7 +5,8 @@ use std::{
 
 use crate::error::AppError;
 
-pub const RAND_ALPHABET: &[u8] = b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+pub const RAND_ALPHABET: &[u8] =
+    b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_";
 
 pub const APP_NAME: &str = env!("CARGO_CRATE_NAME");
 pub const BWRAP_CMD: &str = "bwrap";
@@ -36,9 +37,7 @@ pub fn temp_dir() -> PathBuf {
     let base = std::env::var("RUNTIME_DIRECTORY")
         .or_else(|_| std::env::var("XDG_RUNTIME_DIR"))
         .unwrap_or_else(|_| {
-            tracing::warn!(
-                "Neither RUNTIME_DIRECTORY nor XDG_RUNTIME_DIR set, falling back to /tmp"
-            );
+            log::warn!("Neither RUNTIME_DIRECTORY nor XDG_RUNTIME_DIR set, falling back to /tmp");
             std::env::temp_dir().to_string_lossy().into_owned()
         });
 
@@ -69,6 +68,6 @@ fn test_rand_id() {
     assert_eq!(id.len(), size);
 
     for ch in id.chars() {
-        assert!(RAND_ALPHABET.contains(&(ch as u8)))
+        assert!(RAND_ALPHABET.contains(&(ch as u8)));
     }
 }

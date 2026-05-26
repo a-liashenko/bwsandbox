@@ -37,15 +37,15 @@ impl<T: AsFd> AsFdArg<T> for std::process::Command {
 }
 
 pub trait ReadExt {
-    fn read_ext<const B: usize>(&mut self) -> Result<(usize, [u8; B]), std::io::Error>;
-    fn try_read_ext<const B: usize>(
+    fn read_buf_ext<const B: usize>(&mut self) -> Result<(usize, [u8; B]), std::io::Error>;
+    fn try_read_buf_ext<const B: usize>(
         &mut self,
         timeout: Duration,
     ) -> Result<(usize, [u8; B]), std::io::Error>;
 }
 
 impl<T: AsFd + Read> ReadExt for T {
-    fn read_ext<const B: usize>(&mut self) -> Result<(usize, [u8; B]), std::io::Error> {
+    fn read_buf_ext<const B: usize>(&mut self) -> Result<(usize, [u8; B]), std::io::Error> {
         let mut buf = [0u8; B];
         let bytes = self.read(&mut buf)?;
         if bytes == 0 {
@@ -54,7 +54,7 @@ impl<T: AsFd + Read> ReadExt for T {
         Ok((bytes, buf))
     }
 
-    fn try_read_ext<const B: usize>(
+    fn try_read_buf_ext<const B: usize>(
         &mut self,
         timeout: Duration,
     ) -> Result<(usize, [u8; B]), std::io::Error> {
@@ -75,6 +75,6 @@ impl<T: AsFd + Read> ReadExt for T {
             return Err(std::io::ErrorKind::UnexpectedEof.into());
         }
 
-        self.read_ext()
+        self.read_buf_ext()
     }
 }

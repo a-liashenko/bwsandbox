@@ -10,6 +10,7 @@ pub struct BwrapInfo {
 }
 
 pub trait Service<C: Context> {
+    fn name(&self) -> &'static str;
     fn apply_before(&mut self, ctx: &mut C) -> Result<Scope, AppError>;
     fn apply_after(&mut self, ctx: &mut C) -> Result<Scope, AppError>;
     fn start(self: Box<Self>, status: &BwrapInfo) -> Result<HandleType, AppError>;
@@ -41,7 +42,7 @@ impl<T, E> HandleExt<T, E> for Result<T, E> {
 impl Handle for std::process::Child {
     fn stop(&mut self) -> Result<(), AppError> {
         if let Err(e) = self.kill() {
-            tracing::error!("Failed to kill service Child: {e:?}");
+            log::error!("Failed to kill service Child: {e:?}");
         }
         Ok(())
     }
@@ -89,7 +90,7 @@ impl HandleOwned {
 impl Drop for HandleOwned {
     fn drop(&mut self) {
         if let Err(e) = self.handle.stop() {
-            tracing::error!("Failed to stop service with {e:?}");
+            log::error!("Failed to stop service with {e:?}");
         }
     }
 }

@@ -14,7 +14,6 @@ impl Arch {
         self.0
     }
 
-    #[tracing::instrument]
     pub fn from_str(name: &str) -> anyhow::Result<Self> {
         use super::seccomp_arch_resolve_name;
 
