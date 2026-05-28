@@ -14,6 +14,8 @@ pub enum AppError {
     FileFdShare(RawFd, rustix::io::Errno),
     #[error("Failed to alloc new tempfile, ec {0:?}")]
     FileTempAlloc(std::io::Error),
+    #[error("inotify::{0}: {0:?}")]
+    Inotify(&'static str, rustix::io::Errno),
     #[error("TemDir {0:?}: {1:?}")]
     TempDir(PathBuf, std::io::Error),
     #[error("Env {0:?}: {1:?}")]
@@ -64,5 +66,9 @@ impl AppError {
 
     pub fn io(src: &'static str) -> impl Fn(std::io::Error) -> Self {
         move |e| Self::Io(Cow::Borrowed(src), e)
+    }
+
+    pub fn inotify(ctx: &'static str) -> impl Fn(rustix::io::Errno) -> Self {
+        move |e| Self::Inotify(ctx, e)
     }
 }
