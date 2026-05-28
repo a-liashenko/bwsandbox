@@ -1,5 +1,5 @@
 use crate::config::{Cmd, EnvVal, TempFileVal};
-use crate::services::{BwrapInfo, Context, HandleType, Scope, Service};
+use crate::services::{BwrapInfo, Context, HandleType, Scope, Service, ServiceCommand};
 use crate::system::PollFile;
 use crate::{error::AppError, utils};
 use serde::Deserialize;
@@ -64,7 +64,7 @@ impl<C: Context> Service<C> for DbusService {
         let child = self
             .command
             .stdin(Stdio::null())
-            .spawn()
+            .spawn_service()
             .map_err(AppError::spawn(utils::DBUS_CMD))?;
         PollFile::watch(&self.proxy_bus)?.wait_exists(utils::READY_TIMEOUT)?;
         Ok(HandleType::new(child))

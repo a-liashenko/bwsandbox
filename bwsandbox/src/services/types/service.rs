@@ -1,3 +1,4 @@
+use super::handle::{ChildHandle, HandleType};
 use super::scope::Scope;
 use crate::{bwrap::SandboxStatus, error::AppError};
 
@@ -21,76 +22,13 @@ pub trait Context: std::fmt::Debug {
     fn arg_exist_before(&self, arg: &str) -> bool;
 }
 
-pub trait Handle: std::fmt::Debug {
-    fn stop(&mut self) -> Result<(), AppError>;
+// Force spawn_service() instead of spawn() to wrap into Handle with .kill()/.wait() in drop
+pub trait ServiceCommand {
+    fn spawn_service(&mut self) -> Result<ChildHandle, std::io::Error>;
 }
 
-pub trait HandleExt<T, E> {
-    fn transpose(self) -> Option<Result<T, E>>;
-}
-
-impl<T, E> HandleExt<T, E> for Result<T, E> {
-    fn transpose(self) -> Option<Result<T, E>> {
-        match self {
-            Ok(v) => Some(Ok(v)),
-            Err(e) => Some(Err(e)),
-        }
-    }
-}
-
-// Automatically kill child on stop
-impl Handle for std::process::Child {
-    fn stop(&mut self) -> Result<(), AppError> {
-        if let Err(e) = self.kill() {
-            log::error!("Failed to kill service Child: {e:?}");
-        }
-        Ok(())
-    }
-}
-
-// Do nothing, file will be closed on exit
-impl Handle for std::fs::File {
-    fn stop(&mut self) -> Result<(), AppError> {
-        Ok(())
-    }
-}
-
-impl Handle for Box<dyn Handle> {
-    fn stop(&mut self) -> Result<(), AppError> {
-        self.as_mut().stop()
-    }
-}
-
-#[derive(Debug)]
-pub enum HandleType {
-    None,
-    Owned { _drop: HandleOwned },
-}
-
-impl HandleType {
-    pub fn new<T: Handle + 'static>(handle: T) -> Self {
-        Self::Owned {
-            _drop: HandleOwned::new(handle),
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct HandleOwned {
-    handle: Box<dyn Handle>,
-}
-
-impl HandleOwned {
-    pub fn new<H: Handle + 'static>(handle: H) -> Self {
-        let handle = Box::new(handle);
-        Self { handle }
-    }
-}
-
-impl Drop for HandleOwned {
-    fn drop(&mut self) {
-        if let Err(e) = self.handle.stop() {
-            log::error!("Failed to stop service with {e:?}");
-        }
+impl ServiceCommand for std::process::Command {
+    fn spawn_service(&mut self) -> Result<ChildHandle, std::io::Error> {
+        self.spawn().map(ChildHandle::new)
     }
 }

@@ -1,5 +1,5 @@
 use super::resolv_conf::{ResolvConf, ResolvConfVal};
-use crate::services::{BwrapInfo, Context, HandleType, Scope, Service};
+use crate::services::{BwrapInfo, Context, HandleType, Scope, Service, ServiceCommand};
 use crate::system::PollFile;
 use crate::{config::Cmd, error::AppError, utils};
 use serde::Deserialize;
@@ -83,7 +83,7 @@ impl<C: Context> Service<C> for Pasta {
         crate::print_command::print_command(&self.command);
         let child = self
             .command
-            .spawn()
+            .spawn_service()
             .map_err(AppError::spawn(utils::PASTA_CMD))?;
 
         PollFile::watch(&pasta_pid)?.wait_exists(utils::READY_TIMEOUT)?;
