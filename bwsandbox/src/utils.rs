@@ -17,14 +17,14 @@ pub fn sandbox_id() -> &'static str {
 }
 
 pub fn rand_id(len: usize) -> String {
+    use rustix::rand::{GetRandomFlags, getrandom};
+
     let mut bytes = vec![0u8; len];
-    getrandom::fill(&mut bytes).expect("Random not avail?");
+    getrandom(&mut bytes, GetRandomFlags::empty()).expect("Random not ready");
 
     for el in &mut bytes {
-        let ch = RAND_ALPHABET[*el as usize % RAND_ALPHABET.len()];
-        *el = ch;
+        *el = RAND_ALPHABET[*el as usize % RAND_ALPHABET.len()];
     }
-
     String::from_utf8(bytes).expect("Alphabet must be utf8 compatible")
 }
 

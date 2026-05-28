@@ -10,18 +10,11 @@ pub struct SigTerm {
 
 impl SigTerm {
     pub fn register() -> Result<Self, AppError> {
+        use signal_hook::consts::{SIGINT, SIGTERM};
+
         let terminated = Arc::new(AtomicBool::new(false));
-
-        {
-            let terminated = terminated.clone();
-            ctrlc::try_set_handler(move || {
-                // bwrap is responsible to handle terminate signal and shutdown sandboxed app
-                // sandboxed app is responsible to handle terminate signal
-                // if one of the party ignore it - be it, we will politely wait until killed
-                terminated.store(true, SeqCst);
-            })?;
-        }
-
+        signal_hook::flag::register(SIGTERM, terminated.clone()).map_err(AppError::CtrlC)?;
+        signal_hook::flag::register(SIGINT, terminated.clone()).map_err(AppError::CtrlC)?;
         Ok(Self { terminated })
     }
 
