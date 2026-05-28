@@ -1,5 +1,6 @@
 use crate::config::{Cmd, EnvVal, TempFileVal};
 use crate::services::{BwrapInfo, Context, HandleType, Scope, Service};
+use crate::system::PollFile;
 use crate::{error::AppError, utils};
 use serde::Deserialize;
 use std::{
@@ -65,13 +66,7 @@ impl<C: Context> Service<C> for DbusService {
             .stdin(Stdio::null())
             .spawn()
             .map_err(AppError::spawn(utils::DBUS_CMD))?;
-
-        let exists = utils::poll_file(&self.proxy_bus, utils::READY_POLL, utils::READY_TIMEOUT)?;
-        if !exists {
-            let err = std::io::ErrorKind::NotFound;
-            return Err(AppError::file(&self.proxy_bus)(err.into()));
-        }
-
+        PollFile::watch(&self.proxy_bus)?.wait_exists(utils::READY_TIMEOUT)?;
         Ok(HandleType::new(child))
     }
 }

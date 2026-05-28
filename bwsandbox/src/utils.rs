@@ -1,9 +1,4 @@
-use std::{
-    path::{Path, PathBuf},
-    time::{Duration, Instant},
-};
-
-use crate::error::AppError;
+use std::{path::PathBuf, time::Duration};
 
 pub const RAND_ALPHABET: &[u8] =
     b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_";
@@ -14,7 +9,6 @@ pub const DBUS_CMD: &str = "xdg-dbus-proxy";
 pub const SLIRP4NETNS_CMD: &str = "slirp4netns";
 pub const PASTA_CMD: &str = "pasta";
 
-pub const READY_POLL: Duration = Duration::from_millis(100);
 pub const READY_TIMEOUT: Duration = Duration::from_secs(3);
 
 pub fn sandbox_id() -> &'static str {
@@ -42,19 +36,6 @@ pub fn temp_dir() -> PathBuf {
         });
 
     PathBuf::from(base).join(format!("{APP_NAME}-workdir-{}", sandbox_id()))
-}
-
-pub fn poll_file(path: &Path, poll: Duration, total: Duration) -> Result<bool, AppError> {
-    let start = Instant::now();
-    while start.elapsed() < total {
-        if std::fs::exists(path).map_err(AppError::file(path))? {
-            return Ok(true);
-        }
-
-        std::thread::sleep(poll);
-    }
-
-    Ok(false)
 }
 
 pub fn deserialize<T: serde::de::DeserializeOwned>(s: &str) -> Result<T, toml::de::Error> {

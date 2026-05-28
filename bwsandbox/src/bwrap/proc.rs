@@ -167,20 +167,35 @@ impl BwrapProc {
 
 impl Drop for BwrapProc {
     fn drop(&mut self) {
-        let status = match self.proc.try_wait() {
+        use rustix::process::{Pid, Signal};
+
+        match self.proc.try_wait() {
+            Ok(Some(code)) => {
+                log::trace!("Bwrap finished with exit status: {code:?}");
+                return;
+            }
             Ok(None) => {
                 log::error!("Early BwrapProc drop? Killing child");
-                self.proc.kill()
             }
             Err(e) => {
                 log::error!("Unknown BwrapProc status: {e:?}");
-                self.proc.kill()
             }
-            _ => return,
-        };
-        log::info!("bwrap killed with {status:?}");
+        }
 
-        let wait = self.proc.wait();
-        log::info!("bwrap wait after kill {wait:?}");
+        // Workaround for https://github.com/containers/bubblewrap/issues/753
+        let child_pid = Pid::from_raw(self.status.child_pid.cast_signed());
+        if let Some(pid) = child_pid {
+            let status = rustix::process::kill_process(pid, Signal::KILL);
+            log::trace!("Sandboxed process SIGKILL status: {status:?}");
+        } else {
+            log::error!("Failed to convert {} into Pid", self.status.child_pid);
+            log::error!("Just kiling parent bwrap...");
+
+            let status = self.proc.kill();
+            log::error!("Bwrap process SIGKILL status: {status:?}");
+        }
+
+        let status = self.proc.wait();
+        log::trace!("Bwrap wait status: {status:?}");
     }
 }

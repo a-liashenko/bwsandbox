@@ -1,5 +1,6 @@
 use super::resolv_conf::{ResolvConf, ResolvConfVal};
 use crate::services::{BwrapInfo, Context, HandleType, Scope, Service};
+use crate::system::PollFile;
 use crate::{config::Cmd, error::AppError, utils};
 use serde::Deserialize;
 use std::process::{Command, Stdio};
@@ -85,12 +86,7 @@ impl<C: Context> Service<C> for Pasta {
             .spawn()
             .map_err(AppError::spawn(utils::PASTA_CMD))?;
 
-        let exists = utils::poll_file(&pasta_pid, utils::READY_POLL, utils::READY_TIMEOUT)?;
-        if !exists {
-            let err = std::io::ErrorKind::NotFound;
-            return Err(AppError::file(&pasta_pid)(err.into()));
-        }
-
+        PollFile::watch(&pasta_pid)?.wait_exists(utils::READY_TIMEOUT)?;
         Ok(HandleType::new(child))
     }
 }

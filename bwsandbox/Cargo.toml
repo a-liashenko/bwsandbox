@@ -8,7 +8,7 @@ license.workspace = true
 workspace = true
 
 [dependencies]
-rustix = { workspace = true, features = ["thread", "event"], default-features = false }
+rustix = { workspace = true, features = ["thread", "event", "fs", "process"], default-features = false }
 serde = { workspace = true, default-features = false, features = ["std", "derive"] }
 thiserror = { workspace = true, default-features = false, features = ["std"] }
 toml = { workspace = true, default-features = false, features = ["std", "serde", "parse"] }
