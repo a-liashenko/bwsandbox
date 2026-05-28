@@ -1,6 +1,6 @@
 use super::config::Config;
 use crate::services::net::{nsfix, resolv_conf::ResolvConf};
-use crate::services::{BwrapInfo, Context, HandleType, Scope, Service};
+use crate::services::{BwrapInfo, Context, HandleType, Scope, Service, ServiceCommand};
 use crate::system::{AsFdArg, ReadExt, SharedPipe};
 use crate::{error::AppError, utils};
 use std::process::{Command, Stdio};
@@ -70,7 +70,7 @@ impl<C: Context> Service<C> for Slirp4netns {
         crate::print_command::print_command(&self.command);
         let child = self
             .command
-            .spawn()
+            .spawn_service()
             .map_err(AppError::spawn(utils::SLIRP4NETNS_CMD))?;
 
         let mut rx = self.ready.into_rx();

@@ -1,18 +1,10 @@
-use crate::{bwrap::BwrapProcBuilder, error::AppError, services::HandleExt, utils};
+use crate::{bwrap::BwrapProcBuilder, error::AppError, utils};
 pub use args::Args;
 use std::env::{current_dir, set_current_dir};
 use std::process::ExitStatus;
 
 mod args;
 mod config;
-
-// App responsibility:
-// Parse, load and validate bwrap and services configuration
-// Start and forward bwrap and sandboxed app arguments into child instance
-// Configure and run all services
-// Signal child instance that everyting ready and wait until child process finished
-// Cleanup resources registered in Scope by services
-// Graceful shutdown of services (if implemented) and scoped resources cleanup
 
 pub struct App;
 impl App {
@@ -35,9 +27,9 @@ impl App {
         let proc_status = proc.bwrap_info();
         let _handles = services
             .into_iter()
-            .filter_map(|v| {
+            .map(|v| {
                 log::info!("Starting '{}' service", v.name());
-                v.start(&proc_status).transpose()
+                v.start(&proc_status)
             })
             .collect::<Result<Vec<_>, _>>()?;
 
