@@ -1,13 +1,12 @@
 use crate::error::AppError;
 use rustix::fs::Timespec;
-use std::borrow::Cow;
 use std::ffi::{CStr, CString};
 use std::os::fd::OwnedFd;
 use std::{io::ErrorKind, path::Path, time::Duration};
 
 pub struct PollFile<'a> {
     path: &'a Path,
-    file_name: Cow<'a, CStr>,
+    file_name: CString,
     inot: OwnedFd,
 }
 
@@ -21,9 +20,10 @@ impl<'a> PollFile<'a> {
             None => AppError::File(path.into(), ErrorKind::NotFound.into()).into_err(),
         }?;
 
+        // Always will be Cow::Owned because path segments in rust not null terminated
         let file_name = path
             .file_name()
-            .and_then(|v| v.into_c_str().ok())
+            .and_then(|v| v.into_c_str().map(CString::from).ok())
             .ok_or_else(|| AppError::File(path.into(), ErrorKind::InvalidFilename.into()))?;
 
         let inot = Self::inotify_init(file_dir)?;
@@ -58,20 +58,26 @@ impl<'a> PollFile<'a> {
     }
 
     fn poll_once(&self, elapsed: Duration, timeout: Duration) -> Result<Option<CString>, AppError> {
-        use linux_raw_sys::general::NAME_MAX;
+        use linux_raw_sys::general::{NAME_MAX, inotify_event};
         use rustix::event::{PollFd, PollFlags};
         use std::mem::MaybeUninit;
+
+        const INOTIFY_BUF_SIZE: usize = size_of::<inotify_event>() + NAME_MAX as usize + 1;
 
         let timeout = self.calc_timeout(elapsed, timeout)?;
         let mut poll_fd = [PollFd::new(&self.inot, PollFlags::IN)];
         match rustix::event::poll(&mut poll_fd, Some(&timeout)) {
+            Err(rustix::io::Errno::INTR) => {
+                log::trace!("EINTR recevived, retry loop");
+                return Ok(None);
+            }
             Ok(0) | Err(_) => {
                 return AppError::File(self.path.into(), ErrorKind::TimedOut.into()).into_err();
             }
             _ => {}
         }
 
-        let mut buf = [MaybeUninit::uninit(); NAME_MAX as _];
+        let mut buf = [MaybeUninit::uninit(); INOTIFY_BUF_SIZE];
         let mut reader = rustix::fs::inotify::Reader::new(&self.inot, &mut buf);
         let evt = reader.next().map_err(AppError::inotify("read_event"))?;
         Ok(evt.file_name().map(CStr::to_owned))
