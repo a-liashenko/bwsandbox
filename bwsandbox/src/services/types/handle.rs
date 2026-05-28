@@ -8,21 +8,25 @@ pub trait Handle: std::fmt::Debug {
 // Constructor is private to avoid zombie process if error occured in between spawn() and return HandleType::new(child)
 #[derive(Debug)]
 #[repr(transparent)]
-pub struct ChildHandle(std::process::Child);
+pub struct ChildHandle(Option<std::process::Child>);
 
 impl ChildHandle {
     pub(super) fn new(child: std::process::Child) -> Self {
-        Self(child)
+        Self(Some(child))
     }
 }
 
 impl Handle for ChildHandle {
     fn stop(&mut self) -> Result<(), AppError> {
-        if let Err(e) = self.0.kill() {
+        let Some(mut child) = std::mem::take(&mut self.0) else {
+            return Ok(());
+        };
+
+        if let Err(e) = child.kill() {
             log::error!("Failed to kill service child: {e:?}");
         }
 
-        if let Err(e) = self.0.wait() {
+        if let Err(e) = child.wait() {
             log::error!("Failed to wait for service child exit: {e:?}");
         }
 
