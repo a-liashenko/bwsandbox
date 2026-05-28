@@ -20,6 +20,7 @@ jobs:
   build-checks:
     name: Check, audit && linting
     runs-on: ubuntu-latest
+    container: rust:1-bullseye
     timeout-minutes: 10
     steps:
       - name: Checkout
@@ -28,7 +29,7 @@ jobs:
           ref: ${{ inputs.pr_number && format('refs/pull/{0}/head', inputs.pr_number) || inputs.branch_name || github.ref }}
 
       - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y libseccomp-dev
+        run: apt-get update && apt-get install -y libseccomp-dev
 
       - name: Setup Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
