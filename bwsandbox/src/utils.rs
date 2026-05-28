@@ -19,10 +19,13 @@ pub fn sandbox_id() -> &'static str {
 pub fn rand_id(len: usize) -> String {
     let mut bytes = vec![0u8; len];
     getrandom::fill(&mut bytes).expect("Random not avail?");
-    bytes
-        .iter()
-        .map(|el| RAND_ALPHABET[*el as usize % RAND_ALPHABET.len()] as char)
-        .collect()
+
+    for el in &mut bytes {
+        let ch = RAND_ALPHABET[*el as usize % RAND_ALPHABET.len()];
+        *el = ch;
+    }
+
+    String::from_utf8(bytes).expect("Alphabet must be utf8 compatible")
 }
 
 pub fn temp_dir() -> PathBuf {
