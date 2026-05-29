@@ -1,5 +1,6 @@
 use crate::error::AppError;
-use rustix::fs::Timespec;
+use crate::system::Error;
+use crate::system::poll::Poll;
 use std::ffi::{CStr, CString};
 use std::os::fd::OwnedFd;
 use std::{io::ErrorKind, path::Path, time::Duration};
@@ -35,51 +36,27 @@ impl<'a> PollFile<'a> {
         })
     }
 
-    fn inotify_init(dir: &Path) -> Result<OwnedFd, AppError> {
+    fn inotify_init(dir: &Path) -> Result<OwnedFd, Error> {
         use rustix::fs::inotify::{self, CreateFlags, WatchFlags};
 
-        let inot = inotify::init(CreateFlags::CLOEXEC).map_err(AppError::inotify("init"))?;
-        inotify::add_watch(&inot, dir, WatchFlags::CREATE)
-            .map_err(AppError::inotify("add_watch"))?;
+        let inot = inotify::init(CreateFlags::CLOEXEC).map_err(Error::InotInit)?;
+        inotify::add_watch(&inot, dir, WatchFlags::CREATE).map_err(Error::InotWatch)?;
         Ok(inot)
     }
 
-    fn calc_timeout(&self, elapsed: Duration, timeout: Duration) -> Result<Timespec, AppError> {
-        let left = timeout.saturating_sub(elapsed);
-        if left.is_zero() {
-            return AppError::File(self.path.into(), ErrorKind::TimedOut.into()).into_err();
-        }
-
-        let timeout = Timespec {
-            tv_sec: left.as_secs().try_into().expect("Bad timeout value"),
-            tv_nsec: left.subsec_nanos().into(),
-        };
-        Ok(timeout)
-    }
-
-    fn poll_once(&self, elapsed: Duration, timeout: Duration) -> Result<Option<CString>, AppError> {
+    fn poll_once(&self, timeout: Duration) -> Result<Option<CString>, AppError> {
         use linux_raw_sys::general::{NAME_MAX, inotify_event};
-        use rustix::event::{PollFd, PollFlags};
         use std::mem::MaybeUninit;
 
         const INOTIFY_BUF_SIZE: usize = size_of::<inotify_event>() + NAME_MAX as usize + 1;
 
-        let timeout = self.calc_timeout(elapsed, timeout)?;
-        let mut poll_fd = [PollFd::new(&self.inot, PollFlags::IN)];
-        match rustix::event::poll(&mut poll_fd, Some(&timeout)) {
-            Err(rustix::io::Errno::INTR) => {
-                log::trace!("EINTR recevived, retry loop");
-                return Ok(None);
-            }
-            Ok(0) | Err(_) => {
-                return AppError::File(self.path.into(), ErrorKind::TimedOut.into()).into_err();
-            }
-            _ => {}
-        }
+        Poll::new(&self.inot)
+            .poll_in(timeout)
+            .map_err(AppError::file(self.path))?;
 
         let mut buf = [MaybeUninit::uninit(); INOTIFY_BUF_SIZE];
         let mut reader = rustix::fs::inotify::Reader::new(&self.inot, &mut buf);
-        let evt = reader.next().map_err(AppError::inotify("read_event"))?;
+        let evt = reader.next().map_err(Error::InotRead)?;
         Ok(evt.file_name().map(CStr::to_owned))
     }
 
@@ -92,8 +69,10 @@ impl<'a> PollFile<'a> {
         }
 
         let now = Instant::now();
-        loop {
-            let Some(name) = self.poll_once(now.elapsed(), timeout)? else {
+        while now.elapsed() < timeout {
+            let timeout = timeout.saturating_sub(now.elapsed());
+            let Some(name) = self.poll_once(timeout)? else {
+                // Missing filename from inot?
                 continue;
             };
 
@@ -101,6 +80,8 @@ impl<'a> PollFile<'a> {
                 return Ok(());
             }
         }
+
+        Err(AppError::file(self.path)(ErrorKind::TimedOut.into()))
     }
 }
 
