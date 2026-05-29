@@ -1,27 +1,23 @@
-use crate::{bwrap::BwrapProcBuilder, error::AppError, utils};
+use crate::{bwrap::ProcBuilder, error::AppError, utils};
 pub use args::Args;
-use std::env::{current_dir, set_current_dir};
 use std::process::ExitStatus;
 
 mod args;
 mod config;
+mod current_dir;
 
 pub struct App;
 impl App {
     pub fn start(args: Args) -> Result<ExitStatus, AppError> {
-        let current_dir = current_dir().map_err(AppError::io("Failed to get current dir"))?;
+        let (mut services, bwrap_args) = current_dir::run_in_dir(&args.config_dir, move || {
+            let config: config::Config = utils::deserialize(&args.config)?;
+            let bwrap_args = config.bwrap.collect_args()?;
+            let services = config.services.load()?;
+            Ok((services, bwrap_args))
+        })?;
 
-        set_current_dir(args.config_dir).map_err(AppError::io("Failed to set current dir"))?;
-
-        let config: config::Config = utils::deserialize(&args.config)?;
-
-        let bwrap_args = config.bwrap.collect_args()?;
-        let mut bwrap_builder = BwrapProcBuilder::new(bwrap_args)?;
-
-        let mut services = config.services.load()?;
+        let mut bwrap_builder = ProcBuilder::new(bwrap_args);
         let _cleanup = bwrap_builder.apply_services(&mut services)?;
-
-        set_current_dir(current_dir).map_err(AppError::io("Failed to restore current dir"))?;
 
         let proc = bwrap_builder.spawn(args.app, args.app_args)?;
         let proc_status = proc.bwrap_info();
