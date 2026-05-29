@@ -10,6 +10,7 @@ pub const SLIRP4NETNS_CMD: &str = "slirp4netns";
 pub const PASTA_CMD: &str = "pasta";
 
 pub const READY_TIMEOUT: Duration = Duration::from_secs(3);
+pub const SIGTERM_TIMEOUT: Duration = Duration::from_secs(30);
 
 pub fn sandbox_id() -> &'static str {
     static PREFIX: std::sync::OnceLock<String> = std::sync::OnceLock::new();
