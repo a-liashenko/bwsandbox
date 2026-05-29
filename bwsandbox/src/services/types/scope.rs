@@ -1,4 +1,5 @@
 use std::collections::BTreeSet;
+use std::ops::AddAssign;
 use std::path::PathBuf;
 
 #[derive(Debug, Default)]
@@ -35,6 +36,12 @@ impl Scope {
     }
 }
 
+impl AddAssign for Scope {
+    fn add_assign(&mut self, rhs: Self) {
+        self.merge(rhs);
+    }
+}
+
 #[derive(Debug)]
 pub struct ScopeCleanup {
     scopes: Vec<Scope>,
@@ -43,6 +50,12 @@ pub struct ScopeCleanup {
 impl ScopeCleanup {
     pub fn new(scopes: Vec<Scope>) -> Self {
         Self { scopes }
+    }
+}
+
+impl From<Scope> for ScopeCleanup {
+    fn from(value: Scope) -> Self {
+        Self::new(vec![value])
     }
 }
 
