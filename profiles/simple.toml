@@ -22,7 +22,7 @@
 # Optional, inline and/or template should be used
 inline = [
     # Bind host /usr as read-only /usr in sandbox
-    { type = "str", value = "--ro-bind" },
+    { type = "str", value = "--ro-binds" },
     { type = "str", value = "/usr" },
     { type = "str", value = "/usr" },
 
@@ -51,14 +51,12 @@ dir = "./templates"
 # Now all jinja templates will have access to 'lsb' value
 lsb = { type = "str", value = "/etc/lsb-release" }
 
-
 # Optional, block getdents64 syscall
 [seccomp]
 # Required, can be 'include' or 'inline'
 type = "include"
 # Required if type 'include'
 include = "./simple-seccomp.toml"
-
 
 # Optional, uncomment to filter dbus calls
 [dbus]
@@ -82,7 +80,7 @@ inline = [
 # Optional, uncomment
 # Manipulates env variables BEFORE bwrap arguments
 [env_mapper]
-type = 'inline'
+type = "inline"
 
 # Optinal, default true
 # unset_all = true
@@ -96,13 +94,13 @@ unset = ["USER"]
 
 [slirp4netns]
 # Options, same as bwrap -- 'inline' or 'template' can be used
-type = 'inline'
+type = "inline"
 # Replace content of /etc/resolv.conf with custom settings
 resolv_conf = "nameserver 10.0.2.3"
 # Extra flag to suppress any output from slirp4netns, even if success it still writes something in stdout and stderr, default true
 # quiet = true
 inline = [
-    # 
+    #
     { type = "str", value = "--configure" },
     { type = "str", value = "--disable-host-loopback" },
     { type = "str", value = "--mtu=65520" },
@@ -117,7 +115,7 @@ inline = [
 # # Extra flag to suppress ALL output from pasta, default true
 # quiet = true
 # inline = [
-#     # 
+#     #
 #     { type = "str", value = "-q" },
 #     { type = "str", value = "--config-net" },
 # ]
@@ -125,7 +123,7 @@ inline = [
 # Optional
 # Adds APPIMAGE_EXTRACT_AND_RUN = 1 env variable to sandboxed app
 [appimage]
-type = 'inline'
+type = "inline"
 
 # Optional, default true
 # extract_and_run = true
