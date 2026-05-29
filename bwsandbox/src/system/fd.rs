@@ -1,14 +1,10 @@
-mod shared_pipe;
-
-use crate::error::AppError;
+use crate::{error::AppError, system::poll::Poll};
 use std::{
     io::Read,
     os::fd::{AsFd, AsRawFd},
     process::Command,
     time::Duration,
 };
-
-pub use shared_pipe::SharedPipe;
 
 pub trait AsFdExtra {
     fn share_with_children(&self) -> Result<(), AppError>;
@@ -58,23 +54,7 @@ impl<T: AsFd + Read> ReadExt for T {
         &mut self,
         timeout: Duration,
     ) -> Result<(usize, [u8; B]), std::io::Error> {
-        use rustix::event::{PollFd, PollFlags, Timespec};
-
-        let timeout = Timespec {
-            tv_sec: timeout.as_secs().try_into().expect("Bad timeout value"),
-            tv_nsec: timeout.subsec_nanos().into(),
-        };
-        let mut poll_fds = [PollFd::new(self, PollFlags::IN | PollFlags::HUP)];
-        let ready = rustix::event::poll(&mut poll_fds, Some(&timeout))?;
-        if ready == 0 {
-            return Err(std::io::ErrorKind::TimedOut.into());
-        }
-
-        let evts = poll_fds[0].revents();
-        if evts.contains(PollFlags::HUP) && !evts.contains(PollFlags::IN) {
-            return Err(std::io::ErrorKind::UnexpectedEof.into());
-        }
-
+        Poll::new(&self).poll_in(timeout)?;
         self.read_buf_ext()
     }
 }
