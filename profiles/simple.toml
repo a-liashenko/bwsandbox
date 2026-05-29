@@ -22,7 +22,7 @@
 # Optional, inline and/or template should be used
 inline = [
     # Bind host /usr as read-only /usr in sandbox
-    { type = "str", value = "--ro-binds" },
+    { type = "str", value = "--ro-bind" },
     { type = "str", value = "/usr" },
     { type = "str", value = "/usr" },
 
