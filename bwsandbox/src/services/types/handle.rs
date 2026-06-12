@@ -50,6 +50,13 @@ impl Handle for std::fs::File {
     }
 }
 
+// Do nothing, EOF is signal
+impl Handle for std::io::PipeWriter {
+    fn stop(&mut self) -> Result<(), AppError> {
+        Ok(())
+    }
+}
+
 impl Handle for Box<dyn Handle> {
     fn stop(&mut self) -> Result<(), AppError> {
         self.as_mut().stop()
