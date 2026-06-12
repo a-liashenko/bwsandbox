@@ -20,7 +20,7 @@ pub struct Netns {
 impl Netns {
     pub fn new(name: OsString) -> Result<Self, AppError> {
         let netns = name.to_str().ok_or(AppError::BadArgs)?;
-        let validate_char = |c: char| c.is_alphanumeric() || c == '-' || c == '_';
+        let validate_char = |c: char| c.is_ascii_alphanumeric() || c == '-' || c == '_';
         if netns.chars().all(validate_char) {
             Ok(Self { name })
         } else {

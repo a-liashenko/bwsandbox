@@ -96,6 +96,10 @@ Extra args added to bwrap:
 Extra args added to bwrap:  
 `--setenv` - set [APPIMAGE_EXTRACT_AND_RUN](https://github.com/AppImage/AppImageKit/issues/841) to `1`
 
+**wl_security_context_v1** - tag sandboxed Wayland clients with sandbox engine/app-id metadata via the [wp_security_context_v1](https://wayland.app/protocols/security-context-v1) protocol  
+Extra args added to bwrap:  
+`--bind` - bind the fake Wayland socket into the sandbox (if `mount` is configured)
+
 ## Bwsandbox netns helper
 
 > [!WARNING]

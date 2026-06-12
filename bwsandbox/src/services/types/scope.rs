@@ -1,5 +1,4 @@
 use std::collections::BTreeSet;
-use std::ops::AddAssign;
 use std::path::PathBuf;
 
 #[derive(Debug, Default)]
@@ -17,12 +16,6 @@ impl Scope {
         self
     }
 
-    pub fn merge(&mut self, other: Scope) {
-        if !other.is_empty() {
-            self.remove.extend(other.remove);
-        }
-    }
-
     pub fn is_empty(&self) -> bool {
         self.remove.is_empty()
     }
@@ -36,26 +29,22 @@ impl Scope {
     }
 }
 
-impl AddAssign for Scope {
-    fn add_assign(&mut self, rhs: Self) {
-        self.merge(rhs);
-    }
-}
-
 #[derive(Debug)]
 pub struct ScopeCleanup {
     scopes: Vec<Scope>,
 }
 
 impl ScopeCleanup {
-    pub fn new(scopes: Vec<Scope>) -> Self {
-        Self { scopes }
+    pub fn new(size: usize) -> Self {
+        Self {
+            scopes: Vec::with_capacity(size),
+        }
     }
-}
 
-impl From<Scope> for ScopeCleanup {
-    fn from(value: Scope) -> Self {
-        Self::new(vec![value])
+    pub fn push(&mut self, scope: Scope) {
+        if !scope.is_empty() {
+            self.scopes.push(scope);
+        }
     }
 }
 

@@ -1,7 +1,7 @@
 use crate::{
     bwrap::{ctl::BwrapCtl, proc::BwrapProc},
     error::AppError,
-    services::{Context, Scope, ScopeCleanup, Service},
+    services::{Context, ScopeCleanup, Service},
 };
 use std::{ffi::OsString, process::Command};
 
@@ -9,12 +9,13 @@ use std::{ffi::OsString, process::Command};
 pub struct ServiceCtx {
     command: Command,
     args: Vec<OsString>,
+    app: OsString,
 }
 
 impl ServiceCtx {
-    fn new(args: Vec<OsString>) -> Self {
+    fn new(app: OsString, args: Vec<OsString>) -> Self {
         let command = Command::new(crate::utils::BWRAP_CMD);
-        Self { command, args }
+        Self { command, args, app }
     }
 
     fn apply_args(&mut self) {
@@ -32,6 +33,10 @@ impl Context for ServiceCtx {
         debug_assert!(!self.args.is_empty(), "Valid only for apply_before");
         self.args.iter().any(|v| v == arg)
     }
+
+    fn bin(&self) -> &std::ffi::OsStr {
+        &self.app
+    }
 }
 
 #[derive(Debug)]
@@ -40,8 +45,8 @@ pub struct ProcBuilder {
 }
 
 impl ProcBuilder {
-    pub fn new(args: Vec<OsString>) -> Self {
-        let mut ctx = ServiceCtx::new(args);
+    pub fn new(app: OsString, args: Vec<OsString>) -> Self {
+        let mut ctx = ServiceCtx::new(app, args);
         // Allow access to services resources for sandboxed app (f.e. proxy dbus socket)
         ctx.command_mut().arg("--bind");
         ctx.command_mut().arg(crate::utils::temp_dir());
@@ -59,39 +64,41 @@ impl ProcBuilder {
     where
         S: Service<ServiceCtx>,
     {
-        let mut scope = Scope::new();
+        let mut cleanup = ScopeCleanup::new(services.len());
         for it in services.iter_mut() {
-            scope += it.apply_before(&mut self.ctx)?;
+            let scope = it.apply_before(&mut self.ctx)?;
+            cleanup.push(scope);
         }
         self.ctx.apply_args();
         for it in services.iter_mut() {
-            scope += it.apply_after(&mut self.ctx)?;
+            let scope = it.apply_after(&mut self.ctx)?;
+            cleanup.push(scope);
         }
 
-        Ok(ScopeCleanup::from(scope))
+        Ok(cleanup)
     }
 
-    pub fn spawn(mut self, app: OsString, app_args: Vec<OsString>) -> Result<BwrapProc, AppError> {
+    pub fn spawn(self, app_args: Vec<OsString>) -> Result<BwrapProc, AppError> {
         use crate::system::{AsFdArg, SharedPipe};
+
+        let app = self.ctx.app;
+        let mut command = self.ctx.command;
 
         // Setup ready block
         let mut block = SharedPipe::new()?;
-        self.ctx.command_mut().arg("--block-fd");
-        self.ctx.command_mut().arg_fd(&block.share_rx()?)?;
+        command.arg("--block-fd");
+        command.arg_fd(&block.share_rx()?)?;
 
         // Setup status callback
         let mut status = SharedPipe::new()?;
-        self.ctx.command_mut().arg("--json-status-fd");
-        self.ctx.command_mut().arg_fd(&status.share_tx()?)?;
+        command.arg("--json-status-fd");
+        command.arg_fd(&status.share_tx()?)?;
 
         // Configure sandboxed app
-        self.ctx.command_mut().arg(app);
-        self.ctx.command_mut().args(app_args);
-        crate::print_command::print_command(self.ctx.command_mut());
+        command.arg(app).args(app_args);
+        crate::print_command::print_command(&command);
 
-        let child = self
-            .ctx
-            .command
+        let child = command
             .spawn()
             .map_err(AppError::spawn(crate::utils::BWRAP_CMD))?;
         let ctl = BwrapCtl::new(status.into_rx(), block.into_tx());
