@@ -26,12 +26,22 @@ impl AppId {
 pub struct Config {
     #[serde(default)]
     pub mount: Option<EnvVal<PathBuf>>,
+    #[serde(default = "sandbox_engine_default")]
     pub sandbox_engine: String,
     #[serde(default = "app_id_default")]
     pub app_id: AppId,
+    #[serde(default = "socket_default")]
     pub socket: TempFileVal,
 }
 
 fn app_id_default() -> AppId {
     AppId::Bin(BinResolver)
+}
+
+fn socket_default() -> TempFileVal {
+    TempFileVal::new("wl-security-context-v1-socket")
+}
+
+fn sandbox_engine_default() -> String {
+    crate::utils::APP_NAME.into()
 }
