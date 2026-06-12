@@ -86,7 +86,7 @@ type = "inline"
 # unset_all = true
 
 # Optional, default empty
-keep = ["USER", "HOME"]
+keep = ["USER", "HOME", "XDG_RUNTIME_DIR"]
 
 # Optional, default empty
 # Applied AFTER keep envs, will remove any variable set in keep section
@@ -127,3 +127,17 @@ type = "inline"
 
 # Optional, default true
 # extract_and_run = true
+
+[wl_security_context_v1]
+type = "inline"
+# optional, security context engine f.e. org.flatpak, default "bwsandbox"
+sandbox_engine = "bwsandbox"
+# optional, tempfile in sandbox working dir, default "wl-security-context-v1-socket"
+socket = "wl-security-context-v1-socket"
+# optional, --bind socket above into provided path, by default socket only created in working dir
+mount = "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY"
+# optional, security context app_id generator, default bin
+# Variants:
+# { type = "static", name = "<string>" } - set app_id to "name" for every launched app
+# { type = "bin" } - set app_id to sandboxed binary
+app_id = { type = "bin" }
