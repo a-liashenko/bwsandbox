@@ -6,6 +6,7 @@ mod dbus;
 mod env_mapper;
 mod net;
 mod seccomp;
+mod wl;
 
 use crate::error::AppError;
 use serde::de::DeserializeOwned;
@@ -22,6 +23,7 @@ pub struct ServicesConfig {
     slirp4netns: EntryConfig<net::slirp4netns::Config>,
     appimage: EntryConfig<appimage::AppImageExtract>,
     pasta: EntryConfig<net::pasta::Config>,
+    wl_security_context_v1: EntryConfig<wl::Config>,
 }
 
 impl ServicesConfig {
@@ -34,6 +36,10 @@ impl ServicesConfig {
             Self::load_single(self.slirp4netns, net::slirp4netns::Slirp4netns::from_config)?,
             Self::load_single(self.appimage, appimage::AppImageExtract::from_config)?,
             Self::load_single(self.pasta, net::pasta::Pasta::from_config)?,
+            Self::load_single(
+                self.wl_security_context_v1,
+                wl::SecurityContextV1::from_config,
+            )?,
         ];
 
         let services = services.into_iter().flatten().collect();

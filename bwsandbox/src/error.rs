@@ -6,6 +6,8 @@ use std::{
 
 #[derive(Debug, thiserror::Error)]
 pub enum AppError {
+    #[error("Unexpected NUL in string")]
+    CString(#[from] std::ffi::NulError),
     #[error("IO error {0}: {1:?}")]
     Io(Cow<'static, str>, std::io::Error),
     #[error("File {0:?}: {1:?}")]
@@ -40,6 +42,10 @@ pub enum AppError {
     BwrapEvent(serde_json::Error),
     #[error("System call failed with {0:?}")]
     System(#[from] crate::system::Error),
+    #[error("wl connect: {0:?}")]
+    WlConnect(#[from] wayrs_client::ConnectError),
+    #[error("wl bind: {0:?}")]
+    WlBind(#[from] wayrs_client::global::BindError),
     //
     // #[error(transparent)]
     // Other(#[from] anyhow::Error),
