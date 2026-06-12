@@ -56,7 +56,7 @@ checksum = "b4388bee8683e3d04af747c73422af53102d2bd24d9eadb6cbc100baef4b43f8"
 
 [[package]]
 name = "bwsandbox"
-version = "0.5.3"
+version = "0.5.5"
 dependencies = [
  "anyhow",
  "env_logger",
@@ -79,7 +79,7 @@ dependencies = [
 
 [[package]]
 name = "bwsandbox-netns"
-version = "0.5.3"
+version = "0.5.5"
 dependencies = [
  "rustix",
  "serde",
