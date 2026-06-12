@@ -1,6 +1,7 @@
 use super::handle::{ChildHandle, HandleType};
 use super::scope::Scope;
 use crate::{bwrap::SandboxStatus, error::AppError};
+use std::ffi::OsStr;
 
 #[derive(Debug)]
 pub struct BwrapInfo {
@@ -17,6 +18,7 @@ impl BwrapInfo {
 pub trait Context: std::fmt::Debug {
     fn command_mut(&mut self) -> &mut std::process::Command;
     fn arg_exist_before(&self, arg: &str) -> bool;
+    fn bin(&self) -> &OsStr;
 }
 
 pub trait Service<C: Context> {

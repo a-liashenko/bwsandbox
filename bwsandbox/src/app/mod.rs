@@ -16,10 +16,10 @@ impl App {
             Ok((services, bwrap_args))
         })?;
 
-        let mut bwrap_builder = ProcBuilder::new(bwrap_args);
+        let mut bwrap_builder = ProcBuilder::new(args.app, bwrap_args);
         let _cleanup = bwrap_builder.apply_services(&mut services)?;
 
-        let proc = bwrap_builder.spawn(args.app, args.app_args)?;
+        let proc = bwrap_builder.spawn(args.app_args)?;
         let proc_status = proc.bwrap_info();
         let _handles = services
             .into_iter()
