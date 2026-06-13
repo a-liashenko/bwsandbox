@@ -39,3 +39,40 @@ jobs:
           files: |
             target/release/${{ env.BWSANDBOX_BIN }}
             target/release/${{ env.BWSANDBOX_NETNS_BIN }}
+
+  release_musl:
+    needs: run_tests
+    runs-on: ubuntu-latest
+    container: alpine:latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          apk update && apk add --no-cache \
+            build-base \
+            musl-dev \
+            libseccomp-dev \
+            libseccomp-static \
+            pkgconfig \
+            rustup
+
+          rustup-init -y
+          . "$HOME/.cargo/env"
+          rustup target add x86_64-unknown-linux-musl
+
+      - name: Build release binary
+        run: |
+          . "$HOME/.cargo/env"
+          cargo build --release --target x86_64-unknown-linux-musl
+
+          mv target/x86_64-unknown-linux-musl/release/${{ env.BWSANDBOX_BIN }}{,-musl}
+          mv target/x86_64-unknown-linux-musl/release/${{ env.BWSANDBOX_NETNS_BIN }}{,-musl}
+
+      - name: Upload release binary
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            target/x86_64-unknown-linux-musl/release/${{ env.BWSANDBOX_BIN }}-musl
+            target/x86_64-unknown-linux-musl/release/${{ env.BWSANDBOX_NETNS_BIN }}-musl

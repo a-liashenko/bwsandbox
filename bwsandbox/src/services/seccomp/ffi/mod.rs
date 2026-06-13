@@ -19,7 +19,8 @@ const SCMP_ACT_ERRNO: c_uint = 0x00050001;
 
 const __NR_SCMP_ERROR: i32 = -1;
 
-#[link(name = "seccomp", kind = "dylib")]
+#[cfg_attr(target_env = "musl", link(name = "seccomp", kind = "static"))]
+#[cfg_attr(not(target_env = "musl"), link(name = "seccomp", kind = "dylib"))]
 unsafe extern "C" {
     fn seccomp_version() -> *const Version;
 
