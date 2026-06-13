@@ -67,8 +67,11 @@ jobs:
           . "$HOME/.cargo/env"
           cargo build --release --target x86_64-unknown-linux-musl
 
-          mv target/x86_64-unknown-linux-musl/release/${{ env.BWSANDBOX_BIN }}{,-musl}
-          mv target/x86_64-unknown-linux-musl/release/${{ env.BWSANDBOX_NETNS_BIN }}{,-musl}
+          mv target/x86_64-unknown-linux-musl/release/${{ env.BWSANDBOX_BIN }} \
+              target/x86_64-unknown-linux-musl/release/${{ env.BWSANDBOX_BIN }}-musl
+
+          mv target/x86_64-unknown-linux-musl/release/${{ env.BWSANDBOX_NETNS_BIN }} \
+              target/x86_64-unknown-linux-musl/release/${{ env.BWSANDBOX_NETNS_BIN }}-musl
 
       - name: Upload release binary
         uses: softprops/action-gh-release@v2
