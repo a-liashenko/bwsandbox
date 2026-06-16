@@ -5,6 +5,7 @@ mod appimage;
 mod dbus;
 mod env_mapper;
 mod net;
+mod nix;
 mod seccomp;
 mod wl;
 
@@ -24,6 +25,7 @@ pub struct ServicesConfig {
     appimage: EntryConfig<appimage::AppImageExtract>,
     pasta: EntryConfig<net::pasta::Config>,
     wl_security_context_v1: EntryConfig<wl::Config>,
+    nix: EntryConfig<nix::Config>,
 }
 
 impl ServicesConfig {
@@ -40,6 +42,7 @@ impl ServicesConfig {
                 self.wl_security_context_v1,
                 wl::SecurityContextV1::from_config,
             )?,
+            Self::load_single(self.nix, nix::NixMapper::from_config)?,
         ];
 
         let services = services.into_iter().flatten().collect();

@@ -16,6 +16,7 @@ pub struct Slirp4netns {
 
 impl Slirp4netns {
     pub fn from_config(config: Config) -> Result<Self, AppError> {
+        let _ = utils::which_bin(utils::SLIRP4NETNS_CMD)?;
         let args = config.cmd.collect_args()?;
         let mut command = Command::new(utils::SLIRP4NETNS_CMD);
         command.args(args);

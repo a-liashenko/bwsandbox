@@ -86,7 +86,7 @@ type = "inline"
 # unset_all = true
 
 # Optional, default empty
-keep = ["USER", "HOME", "XDG_RUNTIME_DIR"]
+keep = ["USER", "HOME", "XDG_RUNTIME_DIR", "PATH"]
 
 # Optional, default empty
 # Applied AFTER keep envs, will remove any variable set in keep section
@@ -124,7 +124,6 @@ inline = [
 # Adds APPIMAGE_EXTRACT_AND_RUN = 1 env variable to sandboxed app
 [appimage]
 type = "inline"
-
 # Optional, default true
 # extract_and_run = true
 
@@ -141,3 +140,10 @@ mount = "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY"
 # { type = "static", name = "<string>" } - set app_id to "name" for every launched app
 # { type = "bin" } - set app_id to sandboxed binary
 app_id = { type = "bin" }
+
+# # Add /nix/store/... paths fetched from nix-store query
+# [nix]
+# type = "inline"
+# # Optional, adds --extra-experimental-features read-only-local-store and --store local?read-only=true to avoid write into nix .lock
+# # Default false
+# local_read_only = true
