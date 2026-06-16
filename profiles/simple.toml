@@ -141,9 +141,9 @@ mount = "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY"
 # { type = "bin" } - set app_id to sandboxed binary
 app_id = { type = "bin" }
 
-# Add /nix/store/... paths fetched from nix-store query
-[nix]
-type = "inline"
-# Optional, adds --extra-experimental-features read-only-local-store and --store local?read-only=true to avoid write into nix .lock
-# Default false
-local_read_only = true
+# # Add /nix/store/... paths fetched from nix-store query
+# [nix]
+# type = "inline"
+# # Optional, adds --extra-experimental-features read-only-local-store and --store local?read-only=true to avoid write into nix .lock
+# # Default false
+# local_read_only = true
