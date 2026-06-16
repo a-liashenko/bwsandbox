@@ -1,9 +1,11 @@
+mod path_bin;
 mod rand;
 use std::{
     path::{Path, PathBuf},
     time::Duration,
 };
 
+pub use path_bin::which_bin;
 #[cfg(test)]
 pub use rand::rand_id;
 

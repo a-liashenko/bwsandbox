@@ -28,6 +28,7 @@ pub struct Pasta {
 
 impl Pasta {
     pub fn from_config(config: Config) -> Result<Self, AppError> {
+        let _ = utils::which_bin(utils::PASTA_CMD)?;
         let args = config.cmd.collect_args()?;
         let mut command = Command::new(utils::PASTA_CMD);
 

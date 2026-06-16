@@ -26,6 +26,7 @@ pub struct DbusService {
 
 impl DbusService {
     pub fn from_config(cfg: Config) -> Result<Self, AppError> {
+        let _ = utils::which_bin(utils::DBUS_CMD)?;
         let args = cfg.cmd.collect_args()?;
 
         let mut command = Command::new(utils::DBUS_CMD);

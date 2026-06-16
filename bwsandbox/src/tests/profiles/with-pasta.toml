@@ -20,5 +20,4 @@ inline = [
     { type = "str", value = "--udp-ns" },
     { type = "str", value = "none" },
     { type = "str", value = "--no-map-gw" },
-
 ]
