@@ -15,6 +15,7 @@ pub const BWRAP_CMD: &str = "bwrap";
 pub const DBUS_CMD: &str = "xdg-dbus-proxy";
 pub const SLIRP4NETNS_CMD: &str = "slirp4netns";
 pub const PASTA_CMD: &str = "pasta";
+pub const NIX_STORE: &str = "nix-store";
 
 pub const READY_TIMEOUT: Duration = Duration::from_secs(3);
 pub const SIGTERM_TIMEOUT: Duration = Duration::from_secs(30);

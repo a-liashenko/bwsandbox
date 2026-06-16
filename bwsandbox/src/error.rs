@@ -8,6 +8,8 @@ use std::{
 pub enum AppError {
     #[error("Unexpected NUL in string")]
     CString(#[from] std::ffi::NulError),
+    #[error("Non utf8 {0}: {1:?}")]
+    Utf8(&'static str, std::str::Utf8Error),
     #[error("IO error {0}: {1:?}")]
     Io(Cow<'static, str>, std::io::Error),
     #[error("File {0:?}: {1:?}")]
@@ -70,5 +72,9 @@ impl AppError {
 
     pub fn io(src: &'static str) -> impl Fn(std::io::Error) -> Self {
         move |e| Self::Io(Cow::Borrowed(src), e)
+    }
+
+    pub fn utf8(src: &'static str) -> impl Fn(std::str::Utf8Error) -> Self {
+        move |e| Self::Utf8(src, e)
     }
 }

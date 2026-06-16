@@ -17,8 +17,8 @@ fn fetch_paths() -> Vec<PathBuf> {
 fn find_path(paths: &[PathBuf], name: &str) -> Result<PathBuf, AppError> {
     for it in paths {
         let file = it.join(name);
-        if let Ok(v) = file.canonicalize() {
-            return Ok(v);
+        if file.exists() {
+            return Ok(file);
         }
     }
 
