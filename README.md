@@ -100,6 +100,12 @@ Extra args added to bwrap:
 Extra args added to bwrap:  
 `--bind` - bind the fake Wayland socket into the sandbox (if `mount` is configured)
 
+**nix** - automatically map Nix binary closures into the sandbox by querying `nix-store --query --requisites`  
+**Service is experimental and may be removed at any time**  
+Extra args added to bwrap:  
+`--overlay-src`, `--ro-overlay` - inject the Nix binary into the sandbox mount via overlayfs  
+`--ro-bind` - bind each `/nix` store path from the closure read-only into the sandbox
+
 ## Bwsandbox netns helper
 
 > [!WARNING]
