@@ -43,8 +43,8 @@ impl NixMapper {
     }
 
     fn exec(&mut self, bin: impl AsRef<OsStr>) -> Result<Vec<u8>, AppError> {
-        let out = self
-            .command
+        let out = Command::new(utils::NIX_STORE)
+            .args(self.command.get_args())
             .arg(bin)
             .output()
             .map_err(AppError::spawn(utils::NIX_STORE))?;
@@ -86,6 +86,11 @@ impl<C: Context> Service<C> for NixMapper {
             let out = self.exec(bin)?;
             let out = std::str::from_utf8(&out).map_err(AppError::utf8("nix-store output"))?;
             for line in out.lines() {
+                if !line.starts_with("/nix") {
+                    log::warn!("Unexpected /nix/store path {line:?}");
+                    return AppError::io("Unexpected nix-store output")(ErrorKind::Other.into())
+                        .into_err();
+                }
                 ctx.command_mut().arg("--ro-bind").arg(line).arg(line);
             }
         }
