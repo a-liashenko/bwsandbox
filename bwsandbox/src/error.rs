@@ -9,7 +9,7 @@ pub enum AppError {
     #[error("Unexpected NUL in string")]
     CString(#[from] std::ffi::NulError),
     #[error("Non utf8 {0}: {1:?}")]
-    Utf8(&'static str, std::str::Utf8Error),
+    Utf8(&'static str, Utf8Error),
     #[error("IO error {0}: {1:?}")]
     Io(Cow<'static, str>, std::io::Error),
     #[error("File {0:?}: {1:?}")]
@@ -53,6 +53,26 @@ pub enum AppError {
     // Other(#[from] anyhow::Error),
 }
 
+#[derive(Debug, thiserror::Error)]
+pub enum Utf8Error {
+    #[error("{0:?}")]
+    Str(std::str::Utf8Error),
+    #[error("{0:?}")]
+    String(std::string::FromUtf8Error),
+}
+
+impl From<std::str::Utf8Error> for Utf8Error {
+    fn from(value: std::str::Utf8Error) -> Self {
+        Self::Str(value)
+    }
+}
+
+impl From<std::string::FromUtf8Error> for Utf8Error {
+    fn from(value: std::string::FromUtf8Error) -> Self {
+        Self::String(value)
+    }
+}
+
 impl AppError {
     pub fn into_err<T>(self) -> Result<T, Self> {
         Err(self)
@@ -74,7 +94,7 @@ impl AppError {
         move |e| Self::Io(Cow::Borrowed(src), e)
     }
 
-    pub fn utf8(src: &'static str) -> impl Fn(std::str::Utf8Error) -> Self {
-        move |e| Self::Utf8(src, e)
+    pub fn utf8<T: Into<Utf8Error>>(src: &'static str) -> impl Fn(T) -> Self {
+        move |e| Self::Utf8(src, e.into())
     }
 }
